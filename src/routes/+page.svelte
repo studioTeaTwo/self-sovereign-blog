@@ -1,5 +1,6 @@
 <script>
 	import { Title } from '$lib';
+	import { base } from '$app/paths';
 
 	export let data;
 </script>
@@ -11,7 +12,7 @@
 
 {#each data.posts as post}
 	<article>
-		<a href={`/articles/${post.slug}`}>
+		<a href={`${base}/articles/${post.slug}`}>
 			<span>{post.date}</span>
 			<span>{post.title}</span>
 		</a>

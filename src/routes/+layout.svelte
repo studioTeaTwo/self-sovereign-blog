@@ -1,10 +1,11 @@
 <script>
 	import { Title, RepositoryUrl } from '$lib';
+	import { base } from '$app/paths';
 	import GithubLogo from '$lib/assets/GitHub-Mark-32px.png';
 </script>
 
 <header>
-	<h1><a href="/">{Title}</a></h1>
+	<h1><a href={`${base}/`}>{Title}</a></h1>
 </header>
 
 <main>

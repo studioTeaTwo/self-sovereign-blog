@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import { mdsvex } from 'mdsvex';
 import mdsvexConfig from './mdsvex.config.js';
 
@@ -8,19 +8,24 @@ const config = {
 
 	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	// for more information about preprocessors
-	preprocess: [
-    mdsvex(mdsvexConfig)
-  ],
+	preprocess: [mdsvex(mdsvexConfig)],
 
 	kit: {
 		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
 		// If your environment is not supported or you settled on a specific environment, switch out the adapter.
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
-		adapter: adapter(),
+		adapter: adapter({
+			fallback: '404.html'
+		}),
+
+		paths: {
+			base: process.argv.includes('dev') ? '' : '/self-sovereign-blog'
+		},
 
 		prerender: {
-      entries: ['*', '/sitemap.xml', '/rss.xml']
-    }
+			entries: ['*']
+			// entries: ['*', '/sitemap.xml', '/rss.xml']
+		}
 	}
 };
 
