@@ -1,12 +1,26 @@
 <script>
-  import { Title } from '$lib'
+	import { Title } from '$lib';
+
+	export let data;
 </script>
 
 <svelte:head>
-  <title>{ Title }</title>
-  <meta name="description" content="" />
+	<title>{Title}</title>
+	<meta name="description" content="" />
 </svelte:head>
 
-<ul>
-  <li><a href="/articles/hello-world">hello world</a></li>
-</ul>
+{#each data.posts as post}
+	<article>
+		<a href={`/articles/${post.slug}`}>
+			<span>{post.date}</span>
+			<span>{post.title}</span>
+		</a>
+	</article>
+{/each}
+
+<style>
+	a {
+		text-decoration: none;
+		color: inherit;
+	}
+</style>
