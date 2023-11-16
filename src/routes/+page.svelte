@@ -1,2 +1,12 @@
-<h1>Self Sovereign Blog3</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<script>
+  import { Title } from '$lib'
+</script>
+
+<svelte:head>
+  <title>{ Title }</title>
+  <meta name="description" content="" />
+</svelte:head>
+
+<ul>
+  <li><a href="/articles/hello-world">hello world</a></li>
+</ul>
