@@ -18,14 +18,27 @@
 </footer>
 
 <style>
+	:global(html, body) {
+		min-height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+	:global(body) {
+		display: flex;
+		flex-direction: column;
+    align-items: center;
+		min-height: 100vh;
+	}
+	main {
+		flex-grow: 1;
+	}
 	a {
 		text-decoration: none;
 		color: inherit;
 	}
 	footer {
-		position: fixed;
-		bottom: 0;
-		width: 100vw;
+		position: sticky;
+		top: 100vh;
 
 		display: flex;
 		align-items: center;
