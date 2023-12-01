@@ -1,5 +1,5 @@
 <script>
-	import { Title, RepositoryUrl } from '$lib';
+	import { Title, RepositoryUrl } from '$lib/constants';
 	import { base } from '$app/paths';
 	import GithubLogo from '$lib/assets/GitHub-Mark-32px.png';
 </script>
@@ -26,7 +26,7 @@
 	:global(body) {
 		display: flex;
 		flex-direction: column;
-    align-items: center;
+		align-items: center;
 		min-height: 100vh;
 	}
 	main {
