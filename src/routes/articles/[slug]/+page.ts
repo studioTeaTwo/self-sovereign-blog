@@ -5,23 +5,25 @@ import { browser } from '$app/environment';
  * and pass on the data from +page.server.js
  */
 export async function load({ params, data }) {
+	const { post, html, locals } = data;
+
 	// TODO: persist browser storage. currently doesn't work due to ssr
 	if (browser) {
-		if (data.locals.l402.status !== 200) {
-			setLocalStorage(params.slug, data.locals.l402.error.macaroon, data.locals.l402.error.invoice);
+		if (locals.l402.status === 402) {
+			setLocalStorage(params.slug, locals.l402.error.macaroon, locals.l402.error.invoice);
 		}
 	}
 
-	// load the markdown file based on slug
-	const component = data.post.isIndexFile
-		? // vite requires relative paths and explicit file extensions for dynamic imports
-		  // see https://github.com/rollup/plugins/tree/master/packages/dynamic-import-vars#limitations
-		  await import(`../../../../posts/${data.post.slug}/index.md`)
-		: await import(`../../../../posts/${data.post.slug}.md`);
+	const paywall = {
+		status: locals.l402.status,
+		isPaywall: locals.l402.status !== 200,
+		invoice: locals.l402.error && locals.l402.error.invoice ? locals.l402.error.invoice : ''
+	};
 
 	return {
-		post: data.post,
-		component: component.default,
+		post,
+		html: decodeURIComponent(html),
+		paywall,
 		layout: {
 			fullWidth: true
 		}
@@ -47,6 +49,6 @@ function getCookie(slug: string) {
 	const matches = document.cookie.match(
 		new RegExp('(?:^|; )' + slug.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)')
 	);
-	console.log('ローカルストレージ', slug, matches, document.cookie);
+	console.log('write localStorage', slug, matches, document.cookie);
 	return matches ? decodeURIComponent(matches[1]) : undefined;
 }

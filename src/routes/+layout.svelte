@@ -5,7 +5,7 @@
 	import BitcoinDonation from '$lib/assets/Bitcoin_Donation.png';
 
 	let dialog;
-	
+
 	/** @param {MouseEvent} event */
 	function handleClickBitcoin(event) {
 		navigator.clipboard.writeText(BitcoinDonationAddress);
@@ -32,13 +32,15 @@
 </main>
 
 <footer>
-	<p>© studioTeaTwo</p>
-	<p><a href={RepositoryUrl} target="”_blank”"><img alt="Github logo" src={GithubLogo} /></a></p>
-	<p>
+	<p class="macguffin">"Think rich, look poor."</p>
+	<div>
+		<a href={RepositoryUrl} target="”_blank”"><img alt="Github logo" src={GithubLogo} /></a>
+	</div>
+	<div>
 		<button type="button" class="bitcoin-donation" on:click={handleClickBitcoin}
 			><img alt="Donation" src={BitcoinDonation} width="32" /></button
 		>
-	</p>
+	</div>
 </footer>
 
 <dialog bind:this={dialog}>
@@ -64,12 +66,12 @@
 		align-items: center;
 		min-height: 100vh;
 	}
-	main {
-		flex-grow: 1;
-	}
-	a {
+	:global(a) {
 		text-decoration: none;
 		color: inherit;
+	}
+	main {
+		flex-grow: 1;
 	}
 	footer {
 		position: sticky;
@@ -93,7 +95,9 @@
 	.donation-close {
 		margin-left: auto;
 	}
-	.donation-address-text {
+	.donation-address-text,
+	.macguffin {
 		font-size: 0.8rem;
+		font-weight: bold;
 	}
 </style>

@@ -1,28 +1,45 @@
-import { L402server } from '$lib/constants';
+import { CookieOptions, L402server } from '$lib/constants';
 import type { Cookies, Handle } from '@sveltejs/kit';
-import type { CookieSerializeOptions } from 'cookie';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Authenticate & Authroize L402
-	if (event.url.pathname.includes('/articles/')) {
+	if (
+		event.url.pathname.includes('/articles/') &&
+		!event.url.href.includes('?/') // exclude form action
+	) {
 		const slug = event.params.slug;
 		console.log('challenge', event.url.href, event.cookies.get(slug));
 		const record = event.cookies.get(slug);
+
 		// have preimage
 		if (isValidL402token(record)) {
 			const r = JSON.parse(record);
-			const authroizaiton = { Authroization: `L402 ${r.macaroon}:${r.preimage}` };
-			const res = await event.fetch(`${L402server}/verify`, {
-				headers: authroizaiton
-			});
+
+			let res;
+			try {
+				const authroizaiton = { Authorization: `LSAT ${r.macaroon}:${r.preimage}` };
+				res = await event.fetch(`${L402server}/verify`, {
+					headers: authroizaiton
+				});
+			} catch (error) {
+				event.locals.l402 = {
+					status: 500,
+					isPaywall: true,
+					error: {
+						reason: error.message
+					}
+				};
+				return await resolve(event);
+			}
+
 			const result = await res.json();
 			console.log('verify ', result);
 
-			setCookie(event.cookies, slug, result.macaroon, result.invoice, null);
+			setCookie(event.cookies, slug, r.macaroon, r.invoice, r.preimage);
 
 			if (res.status === 200) {
 				// respond complete article
-				event.locals.l402 = { status: 200 };
+				event.locals.l402 = { status: 200, isPaywall: false };
 				return await resolve(event);
 			} else {
 				// TODO: respond the case of failure reason
@@ -34,6 +51,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			event.locals.l402 = {
 				status: 402,
+				isPaywall: true,
 				error: {
 					reason: 'still in challenge',
 					macaroon: r.macaroon,
@@ -42,8 +60,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 			};
 			return await resolve(event);
 		}
+
 		// new challenge
-		const res = await event.fetch(`${L402server}/createInvoice`);
+		let res;
+		try {
+			res = await event.fetch(`${L402server}/createInvoice`);
+		} catch (error) {
+			event.locals.l402 = {
+				status: 500,
+				isPaywall: true,
+				error: {
+					reason: error.message
+				}
+			};
+			return await resolve(event);
+		}
+
 		const result = await res.json();
 		console.log('new challenge ', result);
 
@@ -51,6 +83,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		event.locals.l402 = {
 			status: 402,
+			isPaywall: true,
 			error: {
 				reason: 'new challenge',
 				macaroon: result.macaroon,
@@ -91,18 +124,15 @@ function setCookie(
 	invoice: string,
 	preimage: string
 ) {
-	const option: CookieSerializeOptions = { maxAge: 2592000 };
-
 	const record = cookies.get(slug);
 	if (!record) {
-		cookies.set(slug, JSON.stringify({ macaroon, invoice, preimage, count: 1 }), option);
+		cookies.set(slug, JSON.stringify({ macaroon, invoice, preimage, count: 1 }), CookieOptions);
 	} else {
 		const r = JSON.parse(record);
-		const _invoice = r.invoice != null && invoice == null ? r.invoice : invoice;
-		const _preimage = r.preimage != null && preimage == null ? r.preimage : preimage;
 		cookies.set(
 			slug,
-			JSON.stringify({ macaroon, invoice: _invoice, preimage: _preimage, count: r.count++ }, option)
+			JSON.stringify({ macaroon, invoice, preimage, count: r.count++ }),
+			CookieOptions
 		);
 	}
 }
