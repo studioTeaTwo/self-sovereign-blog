@@ -22,6 +22,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: authroizaiton
 				});
 			} catch (error) {
+				console.error('verify failed: ',error)
 				event.locals.l402 = {
 					status: 500,
 					isPaywall: true,
@@ -42,7 +43,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				event.locals.l402 = { status: 200, isPaywall: false };
 				return await resolve(event);
 			} else {
-				// TODO: respond the case of failure reason
+				// TODO: respond the case of failure reasons(expiried,etc.)
 			}
 			// have invoice
 		} else if (isWaitingToPayInvoice(record)) {
@@ -66,6 +67,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		try {
 			res = await event.fetch(`${L402server}/createInvoice`);
 		} catch (error) {
+			console.error('new challenge failed: ',error)
 			event.locals.l402 = {
 				status: 500,
 				isPaywall: true,
