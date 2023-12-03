@@ -20,6 +20,9 @@
 {/each}
 
 <style>
+	article {
+		margin-top: 0.5rem;
+	}
 	a {
 		text-decoration: none;
 		color: inherit;

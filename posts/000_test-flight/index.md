@@ -8,6 +8,6 @@ The 🥷 ships by stealth. Are you ready?
 <hr id="l402" hidden>
 Good!
 
-<span style="font-style: italic;">Taking off...</span>
+<p style="font-style: italic;">Taking off...</p>
 
 ![test flight](./test_flight.jpg)

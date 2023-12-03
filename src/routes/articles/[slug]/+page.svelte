@@ -1,6 +1,9 @@
 <script>
 	import qrcode from 'qrcode';
 	import { dev } from '$app/environment';
+	import { PUBLIC_DEVTOOLS_ON } from '$env/static/public';
+	import LockIcon from 'svelte-material-icons/Lock.svelte';
+	import { Title } from '$lib/constants';
 
 	export let data;
 
@@ -11,6 +14,11 @@
 		alert(`copied. ${data.paywall.invoice}`);
 	}
 </script>
+
+<svelte:head>
+	<title>{data.post.title} | {Title}</title>
+	<meta name="description" content="" />
+</svelte:head>
 
 <article class="post">
 	<header>
@@ -25,8 +33,7 @@
 
 	{#if data.paywall.isPaywall}
 		<div class="paywall">
-			<hr />
-			<div>PayWall</div>
+			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
 			{#if data.paywall.status === 402}
 				<div>
 					<button type="button" class="paywall-invoice-qr" on:click={handleClickInvoice}>
@@ -35,9 +42,11 @@
 						{/await}
 					</button>
 				</div>
-				<div class="paywall-invoice-text">{data.paywall.invoice}</div>
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
+				<div class="paywall-invoice-text" on:click={handleClickInvoice}>{data.paywall.invoice}</div>
 
-				{#if dev}
+				{#if dev || PUBLIC_DEVTOOLS_ON}
 					<div class="devtools">
 						<div>devtools</div>
 						<form method="POST" action="?/devToolsPreimage">
@@ -74,19 +83,36 @@
 	.header-date {
 		text-align: center;
 	}
+	.header-title {
+		font-size: 2rem;
+	}
 	.header-date {
 		font-size: 0.8rem;
 	}
 	.paywall {
 		text-align: center;
+		margin: 2rem 0;
+		padding: 1.5rem;
+		background-color: silver;
+		filter: drop-shadow(0 1rem 0.75rem black);
+	}
+	.paywall-title {
+		margin-bottom: 1rem;
 	}
 	.paywall-invoice-qr {
+		cursor: pointer;
 		border: transparent;
 		background-color: transparent;
+		filter: drop-shadow(1px 3px 5px rgba(0, 0, 0, 0.2));
 	}
 	.paywall-invoice-text {
+		color: black;
 		font-size: 0.8rem;
-		overflow-wrap: break-word;
+		cursor: pointer;
+		padding: 0 5rem 1rem;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		white-space: nowrap;
 	}
 	.devtools {
 		color: red;
