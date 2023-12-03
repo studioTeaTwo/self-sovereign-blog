@@ -1,5 +1,5 @@
 <script>
-	import { Title } from '$lib';
+	import { Title } from '$lib/constants';
 	import { base } from '$app/paths';
 
 	export let data;
