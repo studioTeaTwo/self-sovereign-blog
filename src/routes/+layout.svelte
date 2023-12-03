@@ -7,6 +7,7 @@
 	let dialog;
 
 	/** @param {MouseEvent} event */
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleClickBitcoin(event) {
 		navigator.clipboard.writeText(BitcoinDonationAddress);
 		dialog.showModal();
@@ -18,6 +19,7 @@
 		});
 	}
 	/** @param {MouseEvent} event */
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleClickClose(event) {
 		dialog.close();
 	}
@@ -61,7 +63,7 @@
 		padding: 0;
 	}
 	:global(body) {
-		font-family: "Roboto", sans-serif;
+		font-family: 'Roboto', sans-serif;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

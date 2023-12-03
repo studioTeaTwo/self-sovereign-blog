@@ -5,6 +5,7 @@
 	export let data;
 
 	/** @param {MouseEvent} event */
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleClickInvoice(event) {
 		navigator.clipboard.writeText(data.paywall.invoice);
 		alert(`copied. ${data.paywall.invoice}`);
@@ -19,6 +20,7 @@
 		</div>
 	</header>
 
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	<div class="post-content">{@html data.html}</div>
 
 	{#if data.paywall.isPaywall}
