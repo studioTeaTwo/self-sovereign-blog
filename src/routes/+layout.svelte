@@ -61,6 +61,7 @@
 		padding: 0;
 	}
 	:global(body) {
+		font-family: "Roboto", sans-serif;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
