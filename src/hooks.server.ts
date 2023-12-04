@@ -17,6 +17,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			let res;
 			try {
+				// TODO: replace "LSAT" to "L402"
 				const authroizaiton = { Authorization: `LSAT ${r.macaroon}:${r.preimage}` };
 				res = await event.fetch(`${L402server}/verify`, {
 					headers: authroizaiton
@@ -63,9 +64,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 
 		// new challenge
-		let res;
+		let result;
 		try {
-			res = await event.fetch(`${L402server}/createInvoice`);
+			const res = await event.fetch(`${L402server}/createInvoice`);
+			const body = await res.json();
+			if (body.reason !== '') {
+				throw new Error(body.reason);
+			}
+			const challenge = res.headers.get('WWW-Authenticate');
+			result = getToken(challenge);
+			console.log('new challenge ', result);
 		} catch (error) {
 			console.error('new challenge failed: ', error);
 			event.locals.l402 = {
@@ -77,9 +85,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 			};
 			return await resolve(event);
 		}
-
-		const result = await res.json();
-		console.log('new challenge ', result);
 
 		setCookie(event.cookies, slug, result.macaroon, result.invoice, null);
 
@@ -117,6 +122,17 @@ function isWaitingToPayInvoice(record) {
 		return false;
 	}
 	return true;
+}
+
+// @challenge "L402 macaroon=X invoice=Y"
+function getToken(challenge: string) {
+	const tokens = challenge.split(' ');
+	const macaroon = tokens[1].split('=')[1];
+	const invoice = tokens[2].split('=')[1];
+	return {
+		macaroon,
+		invoice
+	};
 }
 
 function setCookie(
