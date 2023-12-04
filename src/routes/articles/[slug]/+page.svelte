@@ -6,12 +6,25 @@
 	import { Title } from '$lib/constants';
 
 	export let data;
+	let dialog;
 
 	/** @param {MouseEvent} event */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleClickInvoice(event) {
+		event.preventDefault();
 		navigator.clipboard.writeText(data.paywall.invoice);
-		alert(`copied. ${data.paywall.invoice}`);
+		dialog.showModal();
+		// close if clicked outside the modal
+		dialog.addEventListener('click', function (event) {
+			if (event.target === dialog) {
+				dialog.close();
+			}
+		});
+	}
+
+	/** @param {MouseEvent} event */
+	function handleClickClose(event) {
+		event.preventDefault();
+		dialog.close();
 	}
 </script>
 
@@ -62,6 +75,16 @@
 	{/if}
 </article>
 
+<dialog bind:this={dialog}>
+	<div class="donation">
+		<div class="donation-close">
+			<button on:click={handleClickClose}>x</button>
+		</div>
+		<p>Copied.</p>
+		<div class="donation-address-text"><span>{data.paywall.invoice}</span></div>
+	</div>
+</dialog>
+
 <style>
 	:global(.post img) {
 		max-width: 100%;
@@ -88,6 +111,18 @@
 	}
 	.header-date {
 		font-size: 0.8rem;
+	}
+	.donation {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	.donation-close {
+		margin-left: auto;
+	}
+	.donation-address-text {
+		width: 80vw;
+		overflow-wrap: anywhere;
 	}
 	.paywall {
 		text-align: center;

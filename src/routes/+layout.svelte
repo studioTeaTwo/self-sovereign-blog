@@ -7,8 +7,8 @@
 	let dialog;
 
 	/** @param {MouseEvent} event */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleClickBitcoin(event) {
+		event.preventDefault();
 		navigator.clipboard.writeText(BitcoinDonationAddress);
 		dialog.showModal();
 		// close if clicked outside the modal
@@ -19,8 +19,8 @@
 		});
 	}
 	/** @param {MouseEvent} event */
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleClickClose(event) {
+		event.preventDefault();
 		dialog.close();
 	}
 </script>
