@@ -72,10 +72,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 				throw new Error(body.reason);
 			}
 			const challenge = res.headers.get('WWW-Authenticate');
+			console.log('header', challenge)
 			result = getToken(challenge);
 			console.log('new challenge ', result);
 		} catch (error) {
-			console.error('new challenge failed: ', error);
+			console.error('new challenge failed: ', error.message);
 			event.locals.l402 = {
 				status: 500,
 				isPaywall: true,
