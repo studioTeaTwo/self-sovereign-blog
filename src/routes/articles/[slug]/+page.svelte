@@ -4,6 +4,7 @@
 	import { PUBLIC_DEVTOOLS_ON } from '$env/static/public';
 	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import { Title } from '$lib/constants';
+	import { displayDate } from '$lib/utils';
 
 	export let data;
 	let dialog;
@@ -37,7 +38,7 @@
 	<header>
 		<h1 class="header-title">{data.post.title}</h1>
 		<div class="header-date">
-			<span>{data.post.date}</span>・<span>{data.post.readingTime}</span>
+			<span>{displayDate(data.post.date)}</span>・<span>{data.post.readingTime}</span>
 		</div>
 	</header>
 
