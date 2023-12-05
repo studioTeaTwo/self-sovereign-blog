@@ -128,8 +128,8 @@ function isWaitingToPayInvoice(record) {
 // @challenge "L402 macaroon=X invoice=Y"
 function getToken(challenge: string) {
 	const tokens = challenge.split(' ');
-	const macaroon = tokens[1].split('=')[1];
-	const invoice = tokens[2].split('=')[1];
+	const macaroon = tokens[1].replace('macaroon=', '');
+	const invoice = tokens[2].replace('invoice=','');
 	return {
 		macaroon,
 		invoice

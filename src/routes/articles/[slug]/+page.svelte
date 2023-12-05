@@ -128,7 +128,7 @@
 	.paywall {
 		text-align: center;
 		margin: 2rem 0;
-		padding: 1.5rem;
+		padding: 1.5rem 0;
 		background-color: silver;
 		filter: drop-shadow(0 1rem 0.75rem black);
 	}

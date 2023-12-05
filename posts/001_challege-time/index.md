@@ -3,7 +3,7 @@ title: challenge time
 date: 2023-12-04
 ---
 
-## Now available in TESTNET
+## Now on TESTNET
 
 All you need is to get the preimage of the invoice below and to input it in devtools. Chop your own wood, and it will warm you twice.
 
