@@ -91,6 +91,20 @@
 		max-width: 100%;
 		height: auto;
 	}
+	:global(.post code) {
+		background-color: ghostwhite;
+		font-size: 0.9rem;
+		border-radius: 0.4rem;
+		padding: 0.2rem 0.5rem;
+	}
+	:global(.post pre) {
+    font-size: .875rem;
+    font-weight: 500;
+    background-color: ghostwhite;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    overflow-x: auto;
+	}
 	article {
 		min-width: 90vw;
 		inline-size: 90vw;

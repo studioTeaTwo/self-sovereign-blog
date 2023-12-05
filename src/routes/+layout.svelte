@@ -89,6 +89,7 @@
 	.bitcoin-donation {
 		border: transparent;
 		background-color: transparent;
+		cursor: pointer;
 	}
 	.donation {
 		display: flex;

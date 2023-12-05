@@ -72,7 +72,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				throw new Error(body.reason);
 			}
 			const challenge = res.headers.get('WWW-Authenticate');
-			console.log('header', challenge)
+			console.log('header', challenge);
 			result = getToken(challenge);
 			console.log('new challenge ', result);
 		} catch (error) {
@@ -129,7 +129,7 @@ function isWaitingToPayInvoice(record) {
 function getToken(challenge: string) {
 	const tokens = challenge.split(' ');
 	const macaroon = tokens[1].replace('macaroon=', '');
-	const invoice = tokens[2].replace('invoice=','');
+	const invoice = tokens[2].replace('invoice=', '');
 	return {
 		macaroon,
 		invoice
