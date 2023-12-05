@@ -18,7 +18,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			let result;
 			try {
-				result = await verify(r.macaroon, r.invoice, event.fetch);
+				result = await verify(r.macaroon, r.preimage, event.fetch);
 				console.log('verify ', result);
 			} catch (error) {
 				console.error('verify failed: ', error);

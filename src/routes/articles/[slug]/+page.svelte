@@ -5,6 +5,7 @@
 	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import { Title } from '$lib/constants';
 	import { displayDate } from '$lib/utils';
+	import { openPayment } from '$lib/webln';
 
 	export let data;
 	let dialog;
@@ -26,6 +27,28 @@
 	function handleClickClose(event) {
 		event.preventDefault();
 		dialog.close();
+	}
+
+	/** @param {MouseEvent} event */
+	async function handleClickWallet(event) {
+		event.preventDefault();
+		const preimage = await openPayment(data.paywall.invoice);
+		if (!!preimage) {
+			const res = await fetch('/api/verify', {
+				method: 'POST',
+				body: JSON.stringify({ slug: data.slug, preimage }),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			const result = await res.json();
+			data.html = decodeURIComponent(result.html);
+			data.paywall = {
+				status: 200,
+				isPaywall: false,
+				invoice: ''
+			};
+		}
 	}
 </script>
 
@@ -59,6 +82,11 @@
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<div class="paywall-invoice-text" on:click={handleClickInvoice}>{data.paywall.invoice}</div>
+				<div>
+					<button type="button" class="paywall-wallet" on:click={handleClickWallet}>
+						Open Wallet
+					</button>
+				</div>
 
 				{#if dev || PUBLIC_DEVTOOLS_ON}
 					<div class="devtools">
@@ -98,12 +126,12 @@
 		padding: 0.2rem 0.5rem;
 	}
 	:global(.post pre) {
-    font-size: .875rem;
-    font-weight: 500;
-    background-color: ghostwhite;
-    border-radius: 1.5rem;
-    padding: 2rem;
-    overflow-x: auto;
+		font-size: 0.875rem;
+		font-weight: 500;
+		background-color: ghostwhite;
+		border-radius: 1.5rem;
+		padding: 2rem;
+		overflow-x: auto;
 	}
 	article {
 		min-width: 90vw;
