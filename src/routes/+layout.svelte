@@ -3,6 +3,7 @@
 	import { base } from '$app/paths';
 	import GithubLogo from '$lib/assets/GitHub-Mark-32px.png';
 	import BitcoinDonation from '$lib/assets/Bitcoin_Donation.png';
+	import RssIcon from 'svelte-material-icons/Rss.svelte';
 
 	let dialog;
 
@@ -35,6 +36,7 @@
 
 <footer>
 	<p class="macguffin">"Think rich, look poor."</p>
+	<div><a href="/rss.xml" target="”_blank”"><RssIcon size={'3rem'} /></a></div>
 	<div>
 		<a href={RepositoryUrl} target="”_blank”"><img alt="Github logo" src={GithubLogo} /></a>
 	</div>

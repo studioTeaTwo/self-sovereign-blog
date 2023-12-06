@@ -1,6 +1,7 @@
 ---
 title: Challenge time
 date: 2023-12-04
+preview: We took off from simnet and are in a global network.
 ---
 
 ## Now on TESTNET
