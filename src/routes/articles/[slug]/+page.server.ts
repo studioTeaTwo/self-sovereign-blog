@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const paywall = {
 		status: locals.l402.status,
 		isPaywall: locals.l402.status !== 200,
+		wordCount: postContents[slug].wordCount,
 		invoice: locals.l402.error && locals.l402.error.invoice ? locals.l402.error.invoice : ''
 	};
 

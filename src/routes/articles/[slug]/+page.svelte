@@ -47,6 +47,7 @@
 			data.paywall = {
 				status: 200,
 				isPaywall: false,
+				wordCount: 0,
 				invoice: ''
 			};
 		}
@@ -72,6 +73,7 @@
 	{#if data.paywall.isPaywall}
 		<div class="paywall">
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
+			<div class="paywall-wordcount">{data.paywall.wordCount} characters</div>
 			{#if data.paywall.status === 402}
 				<div>
 					<button type="button" class="paywall-invoice-qr" on:click={handleClickInvoice}>
@@ -179,7 +181,11 @@
 		filter: drop-shadow(0 1rem 0.75rem black);
 	}
 	.paywall-title {
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
+	}
+	.paywall-wordcount {
+		font-size: 0.8rem;
+		padding-bottom: 1rem;
 	}
 	.paywall-invoice-qr {
 		cursor: pointer;

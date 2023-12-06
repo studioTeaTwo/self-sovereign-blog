@@ -55,7 +55,9 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 		previous: allPosts[index + 1]
 	}));
 
-const contents = {} as { [slug: string]: { html: string; l402html: string } };
+const contents = {} as {
+	[slug: string]: { html: string; l402html: string; wordCount: number };
+};
 postSummaries.forEach(async (post) => {
 	// load the markdown file based on slug
 	const md = post.isIndexFile
@@ -65,7 +67,8 @@ postSummaries.forEach(async (post) => {
 		: await import(`../../../posts/${post.slug}.md`);
 	const html = md.default.render().html;
 	const l402html = eraceL402Content(html);
-	contents[post.slug] = { html, l402html };
+	const wordCount = countWordOfPaywall(html);
+	contents[post.slug] = { html, l402html, wordCount };
 });
 export const postContents = contents;
 
@@ -79,4 +82,9 @@ function eraceL402Content(html: string) {
 	// TODO: make symbol&parse of l402 more practical
 	const resut = html.substring(0, html.indexOf('<hr id="l402" hidden>'));
 	return resut;
+}
+function countWordOfPaywall(html: string) {
+	const resut = html.substring(html.indexOf('<hr id="l402" hidden>'));
+	const wordCount = parse(resut).structuredText.length;
+	return wordCount;
 }
