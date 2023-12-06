@@ -1,4 +1,5 @@
-import { CookieOptions, L402server } from '$lib/constants';
+import { CookieOptions } from '$lib/constants';
+import { createInvoice, isValidL402token, isWaitingToPayInvoice, verify } from '$lib/l402';
 import type { Cookies, Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -15,13 +16,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (isValidL402token(record)) {
 			const r = JSON.parse(record);
 
-			let res;
+			let result;
 			try {
-				// TODO: replace "LSAT" to "L402"
-				const authroizaiton = { Authorization: `LSAT ${r.macaroon}:${r.preimage}` };
-				res = await event.fetch(`${L402server}/verify`, {
-					headers: authroizaiton
-				});
+				result = await verify(r.macaroon, r.preimage, event.fetch);
+				console.log('verify ', result);
 			} catch (error) {
 				console.error('verify failed: ', error);
 				event.locals.l402 = {
@@ -34,18 +32,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 				return await resolve(event);
 			}
 
-			const result = await res.json();
-			console.log('verify ', result);
-
-			setCookie(event.cookies, slug, r.macaroon, r.invoice, r.preimage);
-
-			if (res.status === 200) {
+			if (result.status === 200) {
 				// respond complete article
 				event.locals.l402 = { status: 200, isPaywall: false };
 				return await resolve(event);
 			} else {
 				// TODO: respond the case of failure reasons(expiried,etc.)
 			}
+
 			// have invoice
 		} else if (isWaitingToPayInvoice(record)) {
 			console.log('still in challenge ');
@@ -66,14 +60,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		// new challenge
 		let result;
 		try {
-			const res = await event.fetch(`${L402server}/createInvoice`);
-			const body = await res.json();
-			if (body.reason !== '') {
-				throw new Error(body.reason);
-			}
-			const challenge = res.headers.get('WWW-Authenticate');
-			console.log('header', challenge);
-			result = getToken(challenge);
+			result = await createInvoice(event.fetch);
 			console.log('new challenge ', result);
 		} catch (error) {
 			console.error('new challenge failed: ', error.message);
@@ -102,39 +89,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return await resolve(event);
 };
-
-function isValidL402token(record) {
-	if (record == null) {
-		return false;
-	}
-	const r = JSON.parse(record);
-	if (!r.macaroon || !r.preimage) {
-		return false;
-	}
-	return true;
-}
-
-function isWaitingToPayInvoice(record) {
-	if (record == null) {
-		return false;
-	}
-	const r = JSON.parse(record);
-	if (!r.macaroon || !r.invoice) {
-		return false;
-	}
-	return true;
-}
-
-// @challenge "L402 macaroon=X invoice=Y"
-function getToken(challenge: string) {
-	const tokens = challenge.split(' ');
-	const macaroon = tokens[1].replace('macaroon=', '');
-	const invoice = tokens[2].replace('invoice=', '');
-	return {
-		macaroon,
-		invoice
-	};
-}
 
 function setCookie(
 	cookies: Cookies,

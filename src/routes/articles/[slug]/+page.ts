@@ -5,7 +5,7 @@ import { browser } from '$app/environment';
  * and pass on the data from +page.server.js
  */
 export async function load({ data }) {
-	const { post, html, locals } = data;
+	const { html, locals } = data;
 
 	if (browser) {
 		if (locals.l402.status === 402) {
@@ -13,16 +13,9 @@ export async function load({ data }) {
 		}
 	}
 
-	const paywall = {
-		status: locals.l402.status,
-		isPaywall: locals.l402.status !== 200,
-		invoice: locals.l402.error && locals.l402.error.invoice ? locals.l402.error.invoice : ''
-	};
-
 	return {
-		post,
+		...data,
 		html: decodeURIComponent(html),
-		paywall,
 		layout: {
 			fullWidth: true
 		}

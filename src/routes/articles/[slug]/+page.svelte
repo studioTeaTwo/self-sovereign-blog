@@ -5,8 +5,10 @@
 	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import { Title } from '$lib/constants';
 	import { displayDate } from '$lib/utils';
+	import { openPayment } from '$lib/webln';
 
 	export let data;
+	const DEVTOOLS_ON = PUBLIC_DEVTOOLS_ON === 'true';
 	let dialog;
 
 	/** @param {MouseEvent} event */
@@ -26,6 +28,29 @@
 	function handleClickClose(event) {
 		event.preventDefault();
 		dialog.close();
+	}
+
+	/** @param {MouseEvent} event */
+	async function handleClickWallet(event) {
+		event.preventDefault();
+		const preimage = await openPayment(data.paywall.invoice);
+		if (!!preimage) {
+			const res = await fetch('/api/verify', {
+				method: 'POST',
+				body: JSON.stringify({ slug: data.slug, preimage }),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			const result = await res.json();
+			data.html = decodeURIComponent(result.html);
+			data.paywall = {
+				status: 200,
+				isPaywall: false,
+				wordCount: 0,
+				invoice: ''
+			};
+		}
 	}
 </script>
 
@@ -48,6 +73,7 @@
 	{#if data.paywall.isPaywall}
 		<div class="paywall">
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
+			<div class="paywall-wordcount">{data.paywall.wordCount} characters</div>
 			{#if data.paywall.status === 402}
 				<div>
 					<button type="button" class="paywall-invoice-qr" on:click={handleClickInvoice}>
@@ -60,7 +86,15 @@
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<div class="paywall-invoice-text" on:click={handleClickInvoice}>{data.paywall.invoice}</div>
 
-				{#if dev || PUBLIC_DEVTOOLS_ON}
+				{#if !DEVTOOLS_ON}
+					<div>
+						<button type="button" class="paywall-wallet" on:click={handleClickWallet}>
+							Open Wallet
+						</button>
+					</div>
+				{/if}
+
+				{#if dev || DEVTOOLS_ON}
 					<div class="devtools">
 						<div>devtools</div>
 						<form method="POST" action="?/devToolsPreimage">
@@ -98,12 +132,12 @@
 		padding: 0.2rem 0.5rem;
 	}
 	:global(.post pre) {
-    font-size: .875rem;
-    font-weight: 500;
-    background-color: ghostwhite;
-    border-radius: 1.5rem;
-    padding: 2rem;
-    overflow-x: auto;
+		font-size: 0.875rem;
+		font-weight: 500;
+		background-color: ghostwhite;
+		border-radius: 1.5rem;
+		padding: 2rem;
+		overflow-x: auto;
 	}
 	article {
 		min-width: 90vw;
@@ -147,7 +181,11 @@
 		filter: drop-shadow(0 1rem 0.75rem black);
 	}
 	.paywall-title {
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
+	}
+	.paywall-wordcount {
+		font-size: 0.8rem;
+		padding-bottom: 1rem;
 	}
 	.paywall-invoice-qr {
 		cursor: pointer;

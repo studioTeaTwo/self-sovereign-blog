@@ -1,6 +1,7 @@
 ---
-title: test flight
+title: Test flight
 date: 2023-11-16
+preview: The 🥷 ships by stealth. Are you ready?
 ---
 
 The 🥷 ships by stealth. Are you ready?
