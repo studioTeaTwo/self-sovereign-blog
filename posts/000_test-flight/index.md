@@ -1,5 +1,5 @@
 ---
-title: test flight
+title: Test flight
 date: 2023-11-16
 ---
 

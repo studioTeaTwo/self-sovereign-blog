@@ -8,6 +8,7 @@
 	import { openPayment } from '$lib/webln';
 
 	export let data;
+	const DEVTOOLS_ON = PUBLIC_DEVTOOLS_ON === 'true';
 	let dialog;
 
 	/** @param {MouseEvent} event */
@@ -82,13 +83,16 @@
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<div class="paywall-invoice-text" on:click={handleClickInvoice}>{data.paywall.invoice}</div>
-				<div>
-					<button type="button" class="paywall-wallet" on:click={handleClickWallet}>
-						Open Wallet
-					</button>
-				</div>
 
-				{#if dev || PUBLIC_DEVTOOLS_ON}
+				{#if !DEVTOOLS_ON}
+					<div>
+						<button type="button" class="paywall-wallet" on:click={handleClickWallet}>
+							Open Wallet
+						</button>
+					</div>
+				{/if}
+
+				{#if dev || DEVTOOLS_ON}
 					<div class="devtools">
 						<div>devtools</div>
 						<form method="POST" action="?/devToolsPreimage">
