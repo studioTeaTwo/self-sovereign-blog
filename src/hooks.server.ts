@@ -60,7 +60,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		// new challenge
 		let result;
 		try {
-			result = await createInvoice(event.fetch);
+			result = await createInvoice(slug, event.fetch);
 			console.log('new challenge ', result);
 		} catch (error) {
 			console.error('new challenge failed: ', error.message);

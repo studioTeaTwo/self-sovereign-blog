@@ -1,5 +1,6 @@
 import { decode } from 'bolt11';
 import { L402server } from './constants';
+import { postSummaries } from './data/posts';
 
 // ref: github.com/studioTeaTwo/simple-l402-server/l402.go
 export type ApiResponse = {
@@ -8,8 +9,16 @@ export type ApiResponse = {
 };
 type fetch = typeof fetch;
 
-export async function createInvoice(fetch: fetch) {
-	const res = await fetch(`${L402server}/createInvoice`);
+export async function createInvoice(slug: string ,fetch: fetch) {
+	const price = postSummaries[slug].price
+	const nostrPubkey = '';
+	const res = await fetch(`${L402server}/createInvoice`, {
+		method: 'POST',
+		body: JSON.stringify({ slug, nostrPubkey, price }),
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	});
 	const body: ApiResponse = await res.json();
 	if (body.reason !== '') {
 		throw new Error(body.reason);

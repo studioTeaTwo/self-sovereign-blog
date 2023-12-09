@@ -14,6 +14,17 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 		const html = parse(post.default.render().html);
 		const preview = post.metadata.preview ? parse(post.metadata.preview) : html.querySelector('p');
 
+		// Required
+		if (!post.metadata.title || post.metadata.title === '') {
+			throw new Error(`must set the title: ${filepath}`);
+		}
+		if (!post.metadata.date || post.metadata.date === '') {
+			throw new Error(`must set the date: ${filepath}`);
+		}
+		if (!post.metadata.price || post.metadata.price === '') {
+			throw new Error(`must set the price: ${filepath}`);
+		}
+
 		return {
 			...post.metadata,
 
@@ -43,7 +54,9 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 			},
 
 			// get estimated reading time for the post
-			readingTime: readingTime(html.structuredText).text
+			readingTime: readingTime(html.structuredText).text,
+
+			price: post.metadata.price
 		};
 	})
 	// sort by date
