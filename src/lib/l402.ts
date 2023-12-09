@@ -1,3 +1,4 @@
+import { decode } from 'bolt11';
 import { L402server } from './constants';
 
 // ref: github.com/studioTeaTwo/simple-l402-server/l402.go
@@ -53,6 +54,12 @@ export function isWaitingToPayInvoice(record) {
 	if (!r.macaroon || !r.invoice) {
 		return false;
 	}
+
+	const invoice = decode(r.invoice);
+	if (invoice.timeExpireDate * 1000 < Date.now()) {
+		return false;
+	}
+
 	return true;
 }
 
