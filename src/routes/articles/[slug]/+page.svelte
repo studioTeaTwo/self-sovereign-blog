@@ -17,18 +17,17 @@
 	const DEVTOOLS_ON = PUBLIC_DEVTOOLS_ON === 'true';
 	let dialog;
 	let isLoading = true;
-	let nostrSeckey = '';
+	let nPubkey = '';
 	let invoice = '';
 	let status: PaywallStatus = 'NEED_NOSTR';
 
-	onMount(async () => {
-		await challenge();
+	onMount(() => {
+		challenge();
 	});
 
 	async function challenge() {
-		nostrSeckey = nseckey.get();
-		const nPubkey = npubkey.get();
-		if (nostrSeckey === '') {
+		nPubkey = npubkey.get();
+		if (nPubkey === '') {
 			return;
 		}
 
@@ -55,25 +54,6 @@
 		}
 
 		isLoading = false;
-	}
-
-	/** @param {MouseEvent} event */
-	function handleClickInvoice(event) {
-		event.preventDefault();
-		navigator.clipboard.writeText(invoice);
-		dialog.showModal();
-		// close if clicked outside the modal
-		dialog.addEventListener('click', function (event) {
-			if (event.target === dialog) {
-				dialog.close();
-			}
-		});
-	}
-
-	/** @param {MouseEvent} event */
-	function handleClickClose(event) {
-		event.preventDefault();
-		dialog.close();
 	}
 
 	/** @param {MouseEvent} event */
@@ -107,7 +87,45 @@
 		}
 	}
 
-	function handleClickNostrSeckey() {
+	/** @param {MouseEvent} event */
+	function handleClickInvoice(event) {
+		event.preventDefault();
+		navigator.clipboard.writeText(invoice);
+		dialog.showModal();
+		// close if clicked outside the modal
+		dialog.addEventListener('click', function (event) {
+			if (event.target === dialog) {
+				dialog.close();
+			}
+		});
+	}
+
+	/** @param {MouseEvent} event */
+	function handleClickClose(event) {
+		event.preventDefault();
+		dialog.close();
+	}
+
+	/** @param {MouseEvent} event */
+	async function handleClickNip07(event) {
+		event.preventDefault();
+		if (window.nostr) {
+			try {
+				const pk = await window.nostr.getPublicKey();
+				const npub = nip19.npubEncode(pk);
+
+				setNPubkey(npub, '');
+				challenge();
+			} catch (err) {
+				console.error(err);
+				alert(`Maybe you rejected once? Please reload.`);
+			}
+		}
+	}
+
+	/** @param {MouseEvent} event */
+	function handleClickNostrSeckey(event) {
+		event.preventDefault();
 		const elm: HTMLInputElement = document.querySelector('input[name="nostrSeckey"]');
 		try {
 			const value = elm.value;
@@ -116,21 +134,22 @@
 				throw Error(`nSeckey is incorrect: ${value}`);
 			}
 
+			// encode npPubKey
 			const { data } = nip19.decode(value);
 			const pk = getPublicKey(data as string);
 			const npub = nip19.npubEncode(pk);
 
-			setNSeckey(value, npub);
+			setNPubkey(value, npub);
 			challenge();
 		} catch (err) {
 			console.error(err);
 		}
 	}
 
-	$: setNSeckey = (nSeckey, nPubkey) => {
-		nostrSeckey = nSeckey;
-		nseckey.set(nSeckey);
-		npubkey.set(nPubkey);
+	$: setNPubkey = (nostrPubkey, nostrSeckey) => {
+		nPubkey = nostrPubkey;
+		nseckey.set(nostrSeckey);
+		npubkey.set(nostrPubkey);
 	};
 </script>
 
@@ -155,10 +174,11 @@
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
 			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>
 
-			{#if nostrSeckey === ''}
+			{#if nPubkey === ''}
 				<div>
 					<input type="text" name="nostrSeckey" placeholder="nsec123..." />
 					<button type="button" on:click={handleClickNostrSeckey}>input</button>
+					<button type="button" on:click={handleClickNip07}>NIP-07</button>
 					<div class="paywall-nostr-description">
 						<p class="paywall-nostr-description-text">
 							We use LightningNetwork for paywalled content. First, log in to Nostr. Please pay the
