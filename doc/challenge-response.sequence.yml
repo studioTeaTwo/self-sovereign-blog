@@ -1,4 +1,5 @@
 @startuml
+
 == challenge phase ==
 user -> server: Challenge Request
 note left: NostrPubKey
@@ -9,7 +10,6 @@ user <-- server: Challenge Response
 note right: macaroon + invoice
 
 == answer creation ==
-
 user -> LND: Payment
 note left: invoice
 server <-- LND: Settlement nortification
@@ -19,14 +19,13 @@ note left
   the preimage encrypted
   by NostrPubKey
 end note
-
 user <-- Nostr: Event Response
 user -> user: Decrypt the preimage by NostrSecKey
 
 == response phase ==
-
 user -> server: Answer Request
 note left: macaroon + preimage
 server -> server: Verify
 user <-- server: Answer Response
+
 @enduml
