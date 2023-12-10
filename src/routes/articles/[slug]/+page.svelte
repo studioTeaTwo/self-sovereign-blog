@@ -79,6 +79,14 @@
 	/** @param {MouseEvent} event */
 	async function handleClickWallet(event) {
 		event.preventDefault();
+
+		if (!('webln' in window && window.webln)) {
+			// Open dialog for Naitve wallet
+			window.open(`lightning:${invoice}`);
+			return;
+		}
+
+		// WebLN
 		const preimage = await openPayment(invoice);
 		if (!!preimage) {
 			const res = await fetch('/api/verify', {
@@ -100,18 +108,19 @@
 	}
 
 	function handleClickNostrSeckey() {
-		const elm = document.querySelector('input[name="nostrSeckey"]');
+		const elm: HTMLInputElement = document.querySelector('input[name="nostrSeckey"]');
 		try {
-			const matched = elm.value.match(/nsec1\w+/);
+			const value = elm.value;
+			const matched = value.match(/nsec1\w+/);
 			if (!matched) {
-				throw Error(`nSeckey is incorrect: ${elm.value}`);
+				throw Error(`nSeckey is incorrect: ${value}`);
 			}
 
-			const { type, data } = nip19.decode(elm.value);
-			const pk = getPublicKey(data);
+			const { data } = nip19.decode(value);
+			const pk = getPublicKey(data as string);
 			const npub = nip19.npubEncode(pk);
 
-			setNSeckey(elm.value, npub);
+			setNSeckey(value, npub);
 			challenge();
 		} catch (err) {
 			console.error(err);
