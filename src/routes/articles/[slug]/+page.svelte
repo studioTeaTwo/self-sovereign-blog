@@ -7,14 +7,17 @@
 
 	import { dev } from '$app/environment';
 	import { PUBLIC_DEVTOOLS_ON } from '$env/static/public';
-	import { Title } from '$lib/constants';
+	import { Author, SiteUrl, Title } from '$lib/constants';
 	import { displayDate } from '$lib/utils';
 	import { openPayment } from '$lib/webln';
 	import { npubkey, nseckey } from '$lib/data/nostr';
 	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
 
 	export let data;
+
 	const DEVTOOLS_ON = PUBLIC_DEVTOOLS_ON === 'true';
+	const url = `${SiteUrl}/articles/${data.post.slug}`;
+
 	let dialog;
 	let isLoading = true;
 	let nPubkey = '';
@@ -155,7 +158,23 @@
 
 <svelte:head>
 	<title>{data.post.title} | {Title}</title>
-	<meta name="description" content="" />
+	<meta name="description" content={data.post.preview.text} />
+	<meta name="author" content={Author} />
+
+	<!-- Facebook Meta Tags -->
+	<meta property="og:url" content={url} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={data.post.title} />
+	<meta property="og:description" content={data.post.preview.text} />
+	<!-- <meta property="og:image" content={ogImage} /> -->
+
+	<!-- Twitter Meta Tags -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta property="twitter:domain" content={SiteUrl} />
+	<meta property="twitter:url" content={url} />
+	<meta name="twitter:title" content={data.post.title} />
+	<meta name="twitter:description" content={data.post.preview.text} />
+	<!-- <meta name="twitter:image" content={ogImage} /> -->
 </svelte:head>
 
 <article class="post">
