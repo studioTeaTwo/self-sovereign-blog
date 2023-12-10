@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import type { PostSummary } from '$lib/type';
 import { format } from 'date-fns';
 import { parse } from 'node-html-parser';
 import readingTime from 'reading-time/lib/reading-time.js';
@@ -25,6 +26,10 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 			throw new Error(`must set the price: ${filepath}`);
 		}
 
+		const htmlString = post.default.render().html;
+		const hasPaywallContent = hasL402Content(htmlString);
+		const wordCount = countWordOfPaywall(htmlString);
+
 		return {
 			...post.metadata,
 
@@ -39,13 +44,11 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 			isIndexFile: filepath.endsWith('/index.md'),
 
 			// format date as yyyy-MM-dd
-			date: post.metadata.date
-				? format(
-						// offset by timezone so that the date is correct
-						addTimezoneOffset(new Date(post.metadata.date)),
-						'yyyy-MM-dd'
-				  )
-				: undefined,
+			date: format(
+				// offset by timezone so that the date is correct
+				addTimezoneOffset(new Date(post.metadata.date)),
+				'yyyy-MM-dd'
+			),
 
 			preview: {
 				html: preview.toString(),
@@ -56,8 +59,12 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 			// get estimated reading time for the post
 			readingTime: readingTime(html.structuredText).text,
 
-			price: post.metadata.price
-		};
+			paywall: {
+				hasPaywallContent,
+				price: post.metadata.price,
+				wordCount
+			}
+		} as PostSummary;
 	})
 	// sort by date
 	.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -69,7 +76,7 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 	}));
 
 const contents = {} as {
-	[slug: string]: { html: string; l402html: string; wordCount: number };
+	[slug: string]: { html: string; l402html: string };
 };
 postSummaries.forEach(async (post) => {
 	// load the markdown file based on slug
@@ -80,8 +87,7 @@ postSummaries.forEach(async (post) => {
 		: await import(`../../../posts/${post.slug}.md`);
 	const html = md.default.render().html;
 	const l402html = eraceL402Content(html);
-	const wordCount = countWordOfPaywall(html);
-	contents[post.slug] = { html, l402html, wordCount };
+	contents[post.slug] = { html, l402html };
 });
 export const postContents = contents;
 
@@ -90,6 +96,10 @@ function addTimezoneOffset(date) {
 	return new Date(new Date(date).getTime() + offsetInMilliseconds);
 }
 
+function hasL402Content(html: string) {
+	// TODO: make symbol&parse of l402 more practical
+	return html.includes('<hr id="l402" hidden>');
+}
 // hide the content wrapped with L402
 function eraceL402Content(html: string) {
 	// TODO: make symbol&parse of l402 more practical
@@ -97,7 +107,7 @@ function eraceL402Content(html: string) {
 	return resut;
 }
 function countWordOfPaywall(html: string) {
-	const resut = html.substring(html.indexOf('<hr id="l402" hidden>'));
+	const resut = eraceL402Content(html);
 	const wordCount = parse(resut).structuredText.length;
 	return wordCount;
 }

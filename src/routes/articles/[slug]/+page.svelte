@@ -1,20 +1,66 @@
-<script>
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { DoubleBounce } from 'svelte-loading-spinners';
+	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import qrcode from 'qrcode';
+	import { getPublicKey, nip19 } from 'nostr-tools';
+
 	import { dev } from '$app/environment';
 	import { PUBLIC_DEVTOOLS_ON } from '$env/static/public';
-	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import { Title } from '$lib/constants';
 	import { displayDate } from '$lib/utils';
 	import { openPayment } from '$lib/webln';
+	import { npubkey, nseckey } from '$lib/data/nostr';
+	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
 
 	export let data;
 	const DEVTOOLS_ON = PUBLIC_DEVTOOLS_ON === 'true';
 	let dialog;
+	let isLoading = true;
+	let nostrSeckey = '';
+	let invoice = '';
+	let status: PaywallStatus = 'NEED_NOSTR';
+
+	onMount(async () => {
+		await challenge();
+	});
+
+	async function challenge() {
+		nostrSeckey = nseckey.get();
+		const nPubkey = npubkey.get();
+		if (nostrSeckey === '') {
+			return;
+		}
+
+		isLoading = true;
+
+		try {
+			const res = await fetch('/api/mint', {
+				method: 'POST',
+				body: JSON.stringify({ slug: data.slug, nPubkey, price: data.post.paywall.price }),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			const result: SsrApiResponse = await res.json();
+			status = result.status;
+			if (result.invoice && result.invoice !== '') {
+				invoice = result.invoice;
+			}
+			if (result.html && result.html !== '') {
+				data.html = decodeURIComponent(result.html);
+			}
+		} catch (err) {
+			console.error(err);
+		}
+
+		isLoading = false;
+	}
 
 	/** @param {MouseEvent} event */
 	function handleClickInvoice(event) {
 		event.preventDefault();
-		navigator.clipboard.writeText(data.paywall.invoice);
+		navigator.clipboard.writeText(invoice);
 		dialog.showModal();
 		// close if clicked outside the modal
 		dialog.addEventListener('click', function (event) {
@@ -33,7 +79,7 @@
 	/** @param {MouseEvent} event */
 	async function handleClickWallet(event) {
 		event.preventDefault();
-		const preimage = await openPayment(data.paywall.invoice);
+		const preimage = await openPayment(invoice);
 		if (!!preimage) {
 			const res = await fetch('/api/verify', {
 				method: 'POST',
@@ -42,16 +88,41 @@
 					'Content-Type': 'application/json'
 				}
 			});
-			const result = await res.json();
-			data.html = decodeURIComponent(result.html);
-			data.paywall = {
-				status: 200,
-				isPaywall: false,
-				wordCount: 0,
-				invoice: ''
-			};
+			const result: SsrApiResponse = await res.json();
+			status = result.status;
+			if (result.invoice && result.invoice !== '') {
+				invoice = result.invoice;
+			}
+			if (result.html && result.html !== '') {
+				data.html = decodeURIComponent(result.html);
+			}
 		}
 	}
+
+	function handleClickNostrSeckey() {
+		const elm = document.querySelector('input[name="nostrSeckey"]');
+		try {
+			const matched = elm.value.match(/nsec1\w+/);
+			if (!matched) {
+				throw Error(`nSeckey is incorrect: ${elm.value}`);
+			}
+
+			const { type, data } = nip19.decode(elm.value);
+			const pk = getPublicKey(data);
+			const npub = nip19.npubEncode(pk);
+
+			setNSeckey(elm.value, npub);
+			challenge();
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	$: setNSeckey = (nSeckey, nPubkey) => {
+		nostrSeckey = nSeckey;
+		nseckey.set(nSeckey);
+		npubkey.set(nPubkey);
+	};
 </script>
 
 <svelte:head>
@@ -70,21 +141,37 @@
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	<div class="post-content">{@html data.html}</div>
 
-	{#if data.paywall.isPaywall}
+	{#if status !== 'VERIFIED_OR_NON_PAYWALLCONTENT'}
 		<div class="paywall">
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
-			<div class="paywall-wordcount">{data.paywall.wordCount} characters</div>
-			{#if data.paywall.status === 402}
+			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>
+
+			{#if nostrSeckey === ''}
+				<div>
+					<input type="text" name="nostrSeckey" placeholder="nsec123..." />
+					<button type="button" on:click={handleClickNostrSeckey}>input</button>
+					<div class="paywall-nostr-description">
+						<p class="paywall-nostr-description-text">
+							We use LightningNetwork for paywalled content. First, log in to Nostr. Please pay the
+							LightningNetwork invoice after that. Nostr is used for the settlement synchronization
+							which passes the preimage after paying the invoice. nsecKey is only stored locally and
+							doesn't share with server.
+						</p>
+					</div>
+				</div>
+			{:else if invoice !== ''}
 				<div>
 					<button type="button" class="paywall-invoice-qr" on:click={handleClickInvoice}>
-						{#await qrcode.toDataURL(data.paywall.invoice) then value}
+						{#await qrcode.toDataURL(invoice) then value}
 							<img src={value} alt="Invoice qr code" />
 						{/await}
 					</button>
 				</div>
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<div class="paywall-invoice-text" on:click={handleClickInvoice}>{data.paywall.invoice}</div>
+				<div class="paywall-invoice-text" on:click={handleClickInvoice}>
+					{invoice}
+				</div>
 
 				{#if !DEVTOOLS_ON}
 					<div>
@@ -103,6 +190,10 @@
 						</form>
 					</div>
 				{/if}
+			{:else if isLoading}
+				<div class="paywall-loading">
+					<DoubleBounce size="60" unit="px" duration="1s" />
+				</div>
 			{:else}
 				<p>Sorry, somethig wrong...</p>
 			{/if}
@@ -116,7 +207,7 @@
 			<button on:click={handleClickClose}>x</button>
 		</div>
 		<p>Copied.</p>
-		<div class="donation-address-text"><span>{data.paywall.invoice}</span></div>
+		<div class="donation-address-text"><p>{invoice}</p></div>
 	</div>
 </dialog>
 
@@ -187,6 +278,14 @@
 		font-size: 0.8rem;
 		padding-bottom: 1rem;
 	}
+	.paywall-nostr-description {
+		max-width: 300px;
+		margin: 0 auto;
+	}
+	.paywall-nostr-description-text {
+		font-size: 0.8rem;
+		text-align: left;
+	}
 	.paywall-invoice-qr {
 		cursor: pointer;
 		border: transparent;
@@ -201,6 +300,10 @@
 		text-overflow: ellipsis;
 		overflow: hidden;
 		white-space: nowrap;
+	}
+	.paywall-loading {
+		display: flex;
+		justify-content: center;
 	}
 	.devtools {
 		color: red;

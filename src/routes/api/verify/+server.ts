@@ -3,6 +3,7 @@ import { CookieOptions } from '$lib/constants';
 import { verify } from '$lib/l402';
 import { postContents } from '$lib/data/posts';
 
+// This is used by WebLN payment.
 export async function POST({ request, cookies, fetch }) {
 	const { slug, preimage } = await request.json();
 	console.log('api verify', slug, preimage, cookies.get(slug));
