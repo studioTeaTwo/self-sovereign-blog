@@ -182,13 +182,13 @@
 	}
 
 	/** @param {MouseEvent} event */
-	function handleClickNostrSeckey(event) {
+	async function handleClickNostrSeckey(event) {
 		event.preventDefault();
 		const elm: HTMLInputElement = document.querySelector('input[name="nostrSeckey"]');
 		try {
 			const npub = getPubkeyFromNSeckey(elm.value);
 			setNPubkey(npub, elm.value, false);
-			challenge();
+			await challenge();
 		} catch (error) {
 			console.error(error);
 			alert(error.message);
@@ -216,7 +216,7 @@
 	<!-- <meta property="og:image" content={ogImage} /> -->
 
 	<!-- Twitter Meta Tags -->
-	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:card" content="summary" />
 	<meta property="twitter:domain" content={SiteUrl} />
 	<meta property="twitter:url" content={url} />
 	<meta name="twitter:title" content={data.post.title} />
@@ -311,7 +311,7 @@
 </dialog>
 
 <style>
-	:global(.post img) {
+	:global(.post img, .post video) {
 		max-width: 100%;
 		height: auto;
 	}
@@ -374,16 +374,22 @@
 		margin-bottom: 0.5rem;
 	}
 	.paywall-wordcount {
-		font-size: 0.8rem;
+		color: snow;
 		padding-bottom: 1rem;
+		@media screen and (min-width: 1024px) {
+			font-size: 0.8rem;
+		}
 	}
 	.paywall-nostr-description {
 		max-width: 300px;
 		margin: 0 auto;
 	}
 	.paywall-nostr-description-text {
-		font-size: 0.8rem;
+		color: snow;
 		text-align: left;
+		@media screen and (min-width: 1024px) {
+			font-size: 0.8rem;
+		}
 	}
 	.paywall-invoice-qr {
 		cursor: pointer;

@@ -19,7 +19,7 @@
 	<!-- <meta property="og:image" content={ogImage} /> -->
 
 	<!-- Twitter Meta Tags -->
-	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:card" content="summary" />
 	<meta property="twitter:domain" content={SiteUrl} />
 	<meta property="twitter:url" content={SiteUrl} />
 	<meta name="twitter:title" content={Title} />
