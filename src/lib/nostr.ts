@@ -7,13 +7,15 @@ import {
 	type NDKUser
 } from '@nostr-dev-kit/ndk';
 
-import { ServiceName } from './constants';
 import { nostrAccount } from './stores/nostrAccount';
 import { ndk, servicePubkey } from './stores/ndk';
 import type { PurchaseHistory } from './type';
 import { browser } from '$app/environment';
 
-// Subscribe NIP-04 which shouldn't be used without Nostr account.
+// These shouldn't be used without Nostr account
+// and shouldn't work in the server side.
+
+// Subscribe NIP-04
 export async function subscribeFeed(nPubkey: string) {
 	if (!browser) {
 		return;
@@ -26,25 +28,26 @@ export async function subscribeFeed(nPubkey: string) {
 		'#p': [userPubkey]
 		// '#L': ['#l402'] ,
 		// '#l': [ServiceName, '#l402']
+		// '#L': ['l402token'] ,
+		// '#l': [EncryptedMacaroon, 'l402token']
 	};
 
-	const isNip07 = nostrAccount.isNip07.get();
-	if (isNip07) {
-		ndk.signer = new NDKNip07Signer();
-	} else {
-		const nsk = nostrAccount.nseckey.get();
-		if (nsk === '') {
-			return null;
-		}
-		const sk = nip19.decode(nsk).data as string;
-		ndk.signer = new NDKPrivateKeySigner(sk);
-	}
+	setSigner();
 
 	await ndk.connect();
 	const subscription = ndk.subscribe(filter);
 	await subscription.start();
 
 	return subscription;
+}
+
+export async function getRelayList(nPubkey: string) {
+	if (!browser) {
+		return;
+	}
+	const pubkey = nip19.decode(nPubkey).data as string;
+	const relay = await ndk.getUser({ pubkey }).relayList();
+	return relay.readRelayUrls;
 }
 
 export function getPubkeyFromNSeckey(nseckey: string) {
@@ -60,21 +63,58 @@ export function getPubkeyFromNSeckey(nseckey: string) {
 }
 
 export async function normalize(event: NDKEvent, servicer: NDKUser) {
+	if (!browser) {
+		return;
+	}
+
 	await event.decrypt(servicer);
 	const plaintext = event.content;
 	if (!plaintext || plaintext == '') {
 		return;
 	}
-	const newval: PurchaseHistory = { ...parseText(plaintext), eventId: event.id };
+
+	const macaroon = await getMacaroon(event, servicer);
+
+	const newval: PurchaseHistory = {
+		...parseText(plaintext),
+		macaroon,
+		eventId: event.id,
+		createdAt: event.created_at
+	};
 
 	// Save in localstorage
-	// TODO: How handle the multiple purchases, such as cache clear or nostr trouble?
 	const prev = nostrAccount.purchaseHistory.get();
-	if (!prev.some((data) => data.preimage === newval.preimage)) {
+	const found = prev.filter((data) => data.preimage === newval.preimage);
+	if (found.length === 0) {
 		nostrAccount.purchaseHistory.set([newval]);
+	} else {
+		// If there are duplicates, register if it is the latest one.
+		found.sort((a, b) => (a.createdAt > b.createdAt ? 0 : 1));
+		if (newval.createdAt > found[0].createdAt) {
+			nostrAccount.purchaseHistory.set([newval]);
+		}
 	}
 
 	return newval;
+}
+
+function setSigner() {
+	const isNip07 = nostrAccount.isNip07.get();
+	if (isNip07) {
+		ndk.signer = new NDKNip07Signer();
+	} else {
+		const nsk = nostrAccount.nseckey.get();
+		const sk = nip19.decode(nsk).data as string;
+		ndk.signer = new NDKPrivateKeySigner(sk);
+	}
+}
+
+function getMacaroon(event: NDKEvent, servicer: NDKUser) {
+	// e.g. ['l', 'aaagekkc', 'l402token']
+	const token = event.tags
+		.filter((value) => value.length === 3 && value[2] === 'l402token')
+		.map((value) => value[1]);
+	return ndk.signer.decrypt(servicer, token[0]);
 }
 
 // ref: https://github.com/studioTeaTwo/aperture/tree/studioteatwo/nostr

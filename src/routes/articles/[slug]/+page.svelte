@@ -13,7 +13,7 @@
 	import { openPayment } from '$lib/webln';
 	import { nostrAccount } from '$lib/stores/nostrAccount';
 	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
-	import { getPubkeyFromNSeckey, normalize, subscribeFeed } from '$lib/nostr';
+	import { getPubkeyFromNSeckey, getRelayList, normalize, subscribeFeed } from '$lib/nostr';
 	import { servicer } from '$lib/stores/ndk';
 
 	export let data;
@@ -25,7 +25,7 @@
 	let isLoading = false;
 	let nPubkey = nostrAccount.npubkey.get();
 	let invoice = '';
-	let status: PaywallStatus = 'NEED_NOSTR';
+	let status: PaywallStatus = nPubkey === '' ? 'NEED_NOSTR' : 'NEED_INVOICE';
 	let subscription: NDKSubscription;
 
 	onMount(async () => {
@@ -35,9 +35,8 @@
 		// already purchased case
 		const purchaseHistory = nostrAccount.purchaseHistory.get();
 		const found = purchaseHistory.find((val) => val.slug === data.slug);
-		if (!!found) {
-			// TODO: should attach macaroon as well
-			await verify(found.preimage);
+		if (!!found && !!found.preimage && !!found.macaroon) {
+			await verify(found.preimage, found.macaroon);
 			return;
 		}
 		// challenge
@@ -58,9 +57,15 @@
 		isLoading = true;
 
 		try {
+			const relayList = await getRelayList(nPubkey);
 			const res = await fetch('/api/challenge', {
 				method: 'POST',
-				body: JSON.stringify({ slug: data.slug, nPubkey, price: data.post.paywall.price }),
+				body: JSON.stringify({
+					slug: data.slug,
+					nPubkey,
+					relayList,
+					price: data.post.paywall.price
+				}),
 				headers: {
 					'Content-Type': 'application/json'
 				}
@@ -81,12 +86,12 @@
 		await subscribeNostr();
 	}
 
-	async function verify(preimage: string) {
+	async function verify(preimage: string, macaroon?: string) {
 		isLoading = true;
 		try {
 			const res = await fetch('/api/verify', {
 				method: 'POST',
-				body: JSON.stringify({ slug: data.slug, preimage }),
+				body: JSON.stringify({ slug: data.slug, preimage, macaroon }),
 				headers: {
 					'Content-Type': 'application/json'
 				}
@@ -235,7 +240,7 @@
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
 			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>
 
-			{#if nPubkey === ''}
+			{#if status === 'NEED_NOSTR'}
 				<div>
 					<input type="text" name="nostrSeckey" placeholder="nsec123..." />
 					<button type="button" on:click={handleClickNostrSeckey}>input</button>
@@ -244,12 +249,12 @@
 						<p class="paywall-nostr-description-text">
 							We use LightningNetwork for paywalled content. First, log in to Nostr. Please pay the
 							LightningNetwork invoice after that. Nostr is used for the settlement synchronization
-							which passes the preimage after paying the invoice. nsecKey is only stored locally and
-							doesn't share with server.
+							which passes the preimage by NIP-04 after paying the invoice. nsecKey is only stored
+							locally and doesn't share with server.
 						</p>
 					</div>
 				</div>
-			{:else if invoice !== ''}
+			{:else if status === 'NEED_PAYMENT'}
 				<div>
 					<button type="button" class="paywall-invoice-qr" on:click={handleClickInvoice}>
 						{#await qrcode.toDataURL(invoice) then value}
@@ -280,6 +285,10 @@
 						</form>
 					</div>
 				{/if}
+			{:else if status === 'NEED_INVOICE'}
+				<p>Failed to issue a invoice. Please try again after.</p>
+			{:else if status === 'NEED_VERIFIED'}
+				<p>Failed to verify the payment. Please try again after, or please inquiry.</p>
 			{:else if isLoading}
 				<div class="paywall-loading">
 					<DoubleBounce size="60" unit="px" duration="1s" />

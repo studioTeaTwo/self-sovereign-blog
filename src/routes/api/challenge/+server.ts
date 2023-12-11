@@ -1,14 +1,14 @@
 import { CookieOptions } from '$lib/constants';
 import { postContents } from '$lib/stores/posts';
 import { createInvoice, isValidL402token, isWaitingToPayInvoice, verify } from '$lib/l402';
-import type { SsrApiResponse } from '$lib/type';
+import type { L402Cookie, SsrApiResponse } from '$lib/type';
 import { json, type Cookies } from '@sveltejs/kit';
 
 // This is called on mounting component or on inputten Nostr seckey or NIP-07.
 // Authenticate & Authroize L402.
 // HttpStatus 500 keeps current PaywallStatus because request self failed.
 export async function POST({ request, cookies, fetch }) {
-	const { slug, nPubkey, price } = await request.json();
+	const { slug, nPubkey, relayList, price } = await request.json();
 	console.log('challenge', request.url, cookies.get(slug));
 	const record = cookies.get(slug);
 
@@ -49,7 +49,7 @@ export async function POST({ request, cookies, fetch }) {
 	// new challenge
 	let result;
 	try {
-		result = await createInvoice(slug, price, nPubkey, fetch);
+		result = await createInvoice(slug, price, nPubkey, relayList, fetch);
 		console.log('new challenge ', result);
 	} catch (error) {
 		console.error('new challenge failed: ', error.message);
@@ -72,13 +72,11 @@ function setCookie(
 ) {
 	const record = cookies.get(slug);
 	if (!record) {
-		cookies.set(slug, JSON.stringify({ macaroon, invoice, preimage, count: 1 }), CookieOptions);
+		const cookie: L402Cookie = { macaroon, invoice, preimage, count: 1 };
+		cookies.set(slug, JSON.stringify(cookie), CookieOptions);
 	} else {
 		const r = JSON.parse(record);
-		cookies.set(
-			slug,
-			JSON.stringify({ macaroon, invoice, preimage, count: r.count++ }),
-			CookieOptions
-		);
+		const cookie: L402Cookie = { macaroon, invoice, preimage, count: r.count++ };
+		cookies.set(slug, JSON.stringify(cookie), CookieOptions);
 	}
 }

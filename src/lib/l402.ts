@@ -4,14 +4,20 @@ import type { L402ApiResponse, PaywallStatus } from './type';
 
 type fetch = typeof fetch;
 
-export async function createInvoice(slug: string, price: number, nPubkey: string, fetch: fetch) {
+export async function createInvoice(
+	slug: string,
+	price: number,
+	nPubkey: string,
+	relayList: string[],
+	fetch: fetch
+) {
 	if (slug === '' || price === 0 || nPubkey === '') {
 		throw new Error('required parameters is missing');
 	}
 
 	const res = await fetch(`${L402server}/createInvoice`, {
 		method: 'POST',
-		body: JSON.stringify({ slug, nPubkey, price }),
+		body: JSON.stringify({ slug, nPubkey, relayList, price }),
 		headers: {
 			'Content-Type': 'application/json'
 		}
