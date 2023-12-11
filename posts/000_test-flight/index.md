@@ -1,6 +1,7 @@
 ---
 title: Test flight
 date: 2023-11-16
+price: 1
 preview: The 🥷 ships by stealth. Are you ready?
 ---
 

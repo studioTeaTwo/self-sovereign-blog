@@ -1,5 +1,5 @@
 <script>
-	import { Title } from '$lib/constants';
+	import { Author, SiteUrl, Title } from '$lib/constants';
 	import { base } from '$app/paths';
 	import { displayDate } from '$lib/utils';
 
@@ -9,6 +9,22 @@
 <svelte:head>
 	<title>{Title}</title>
 	<meta name="description" content="" />
+	<meta name="author" content={Author} />
+
+	<!-- Facebook Meta Tags -->
+	<meta property="og:url" content={SiteUrl} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={Title} />
+	<meta property="og:description" content="" />
+	<!-- <meta property="og:image" content={ogImage} /> -->
+
+	<!-- Twitter Meta Tags -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta property="twitter:domain" content={SiteUrl} />
+	<meta property="twitter:url" content={SiteUrl} />
+	<meta name="twitter:title" content={Title} />
+	<meta name="twitter:description" content="" />
+	<!-- <meta name="twitter:image" content={ogImage} /> -->
 </svelte:head>
 
 {#each data.posts as post}

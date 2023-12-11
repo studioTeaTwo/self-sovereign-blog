@@ -1,16 +1,28 @@
 import { decode } from 'bolt11';
 import { L402server } from './constants';
+import type { L402ApiResponse, PaywallStatus } from './type';
 
-// ref: github.com/studioTeaTwo/simple-l402-server/l402.go
-export type ApiResponse = {
-	result: boolean;
-	reason: string;
-};
 type fetch = typeof fetch;
 
-export async function createInvoice(fetch: fetch) {
-	const res = await fetch(`${L402server}/createInvoice`);
-	const body: ApiResponse = await res.json();
+export async function createInvoice(
+	slug: string,
+	price: number,
+	nPubkey: string,
+	relayList: string[],
+	fetch: fetch
+) {
+	if (slug === '' || price === 0 || nPubkey === '') {
+		throw new Error('required parameters is missing');
+	}
+
+	const res = await fetch(`${L402server}/createInvoice`, {
+		method: 'POST',
+		body: JSON.stringify({ slug, nPubkey, relayList, price }),
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	});
+	const body: L402ApiResponse = await res.json();
 	if (body.reason !== '') {
 		throw new Error(body.reason);
 	}
@@ -26,7 +38,7 @@ export async function verify(macaroon: string, preimage: string, fetch: fetch) {
 	const res = await fetch(`${L402server}/verify`, {
 		headers: authroizaiton
 	});
-	const body: ApiResponse = await res.json();
+	const body: L402ApiResponse = await res.json();
 	return {
 		status: res.status,
 		...body
@@ -61,6 +73,36 @@ export function isWaitingToPayInvoice(record) {
 	}
 
 	return true;
+}
+
+export function getStatus(
+	hasL402Content: boolean,
+	nostrSeckey: string,
+	invoice: string,
+	preimage: string,
+	isVerified: boolean
+): PaywallStatus {
+	if (!hasL402Content) {
+		return 'VERIFIED_OR_NON_PAYWALLCONTENT';
+	}
+
+	if (!nostrSeckey || nostrSeckey == '') {
+		return 'NEED_NOSTR';
+	}
+
+	if (!invoice || invoice == '') {
+		return 'NEED_INVOICE';
+	}
+
+	if (!preimage || preimage == '') {
+		return 'NEED_PAYMENT';
+	}
+
+	if (!isVerified) {
+		return 'NEED_VERIFIED';
+	}
+
+	return 'VERIFIED_OR_NON_PAYWALLCONTENT';
 }
 
 // @challenge "L402 macaroon=X invoice=Y"

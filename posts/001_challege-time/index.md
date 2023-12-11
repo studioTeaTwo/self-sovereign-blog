@@ -1,6 +1,7 @@
 ---
 title: Challenge time
 date: 2023-12-04
+price: 10
 preview: We took off from simnet and are in a global network.
 ---
 
@@ -23,7 +24,7 @@ Paths are made by walking.
 ```
 NOTE: action list to input the preimage
 
-- Prepare the wallet for the testnet (Most of it will be building nodes)
+- Prepare the wallet for the testnet (Most will be building your own node)
 - Get tBTC
 - Decode the invoice and get this node ID (if necessary)
 - Connect to the node and open a channel (if necessary)

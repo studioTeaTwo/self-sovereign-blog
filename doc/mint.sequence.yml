@@ -1,0 +1,35 @@
+@startuml
+
+browser -> browser: Confirm NostrPubkey
+note left
+  1. When component mounts while logged in
+  2. When user inputs Nostr key
+end note
+browser -> ssr_server: Mint Request
+ssr_server -> ssr_server: Check cookies
+note right
+  1. Not invoice
+  2. Invoice existing
+  3. Preimage existing
+end note
+
+== 1. Not invoice ==
+ssr_server -> l402_server: Invoice Request
+l402_server -> l402_server: Get invoice from LND
+ssr_server <-- l402_server: Invoice Response
+browser <-- ssr_server: Rendered Page Response
+note right: invoice
+
+== 2. Invoice existing ==
+ssr_server -> ssr_server: Within the expiration date?
+browser <-- ssr_server: Rendered Page Response
+note right: invoice
+
+== 3. Preimage existing ==
+ssr_server -> l402_server: Verification Request
+l402_server -> l402_server: Verify preimage
+ssr_server <-- l402_server: Verification Response
+browser <-- ssr_server: Rendered Page Response
+note right: paywalled content
+
+@enduml

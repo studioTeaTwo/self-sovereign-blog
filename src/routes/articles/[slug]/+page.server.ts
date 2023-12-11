@@ -1,10 +1,9 @@
-import { postContents, postSummaries } from '$lib/data/posts';
+import { postContents, postSummaries } from '$lib/stores/posts';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { devToolsActions } from '$lib/devTools';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
-	console.log(params, locals);
+export const load: PageServerLoad = async ({ params }) => {
 	const { slug } = params;
 
 	// get post with metadata
@@ -13,21 +12,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(404, 'Post not found');
 	}
 
-	const html = locals.l402.isPaywall ? postContents[slug].l402html : postContents[slug].html;
-
-	const paywall = {
-		status: locals.l402.status,
-		isPaywall: locals.l402.status !== 200,
-		wordCount: postContents[slug].wordCount,
-		invoice: locals.l402.error && locals.l402.error.invoice ? locals.l402.error.invoice : ''
-	};
+	const html = postContents[slug].l402html;
 
 	return {
 		slug,
 		post,
-		html: encodeURIComponent(html),
-		paywall,
-		locals
+		html,
+		layout: {
+			fullWidth: true
+		}
 	};
 };
 

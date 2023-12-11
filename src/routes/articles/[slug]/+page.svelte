@@ -1,20 +1,154 @@
-<script>
+<script lang="ts">
+	import { onDestroy, onMount } from 'svelte';
+	import { DoubleBounce } from 'svelte-loading-spinners';
+	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import qrcode from 'qrcode';
+	import { nip19 } from 'nostr-tools';
+	import type { NDKSubscription } from '@nostr-dev-kit/ndk';
+
 	import { dev } from '$app/environment';
 	import { PUBLIC_DEVTOOLS_ON } from '$env/static/public';
-	import LockIcon from 'svelte-material-icons/Lock.svelte';
-	import { Title } from '$lib/constants';
+	import { Author, SiteUrl, Title } from '$lib/constants';
 	import { displayDate } from '$lib/utils';
 	import { openPayment } from '$lib/webln';
+	import { nostrAccount } from '$lib/stores/nostrAccount';
+	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
+	import { getPubkeyFromNSeckey, getRelayList, normalize, subscribeFeed } from '$lib/nostr';
+	import { servicer } from '$lib/stores/ndk';
 
 	export let data;
+
 	const DEVTOOLS_ON = PUBLIC_DEVTOOLS_ON === 'true';
+	const url = `${SiteUrl}/articles/${data.post.slug}`;
+
 	let dialog;
+	let isLoading = false;
+	let nPubkey = nostrAccount.npubkey.get();
+	let invoice = '';
+	let status: PaywallStatus = nPubkey === '' ? 'NEED_NOSTR' : 'NEED_INVOICE';
+	let subscription: NDKSubscription;
+
+	onMount(async () => {
+		if (!data.post.paywall.hasPaywallContent) {
+			return;
+		}
+		// already purchased case
+		const purchaseHistory = nostrAccount.purchaseHistory.get();
+		const found = purchaseHistory.find((val) => val.slug === data.slug);
+		if (!!found && !!found.preimage && !!found.macaroon) {
+			await verify(found.preimage, found.macaroon);
+			return;
+		}
+		// challenge
+		await challenge();
+	});
+	onDestroy(() => {
+		if (!!subscription) {
+			subscription.stop();
+		}
+	});
+
+	async function challenge() {
+		nPubkey = nostrAccount.npubkey.get();
+		if (nPubkey === '') {
+			return;
+		}
+
+		isLoading = true;
+
+		try {
+			const relayList = await getRelayList(nPubkey);
+			const res = await fetch('/api/challenge', {
+				method: 'POST',
+				body: JSON.stringify({
+					slug: data.slug,
+					nPubkey,
+					relayList,
+					price: data.post.paywall.price
+				}),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			const result: SsrApiResponse = await res.json();
+			status = result.status;
+			if (result.invoice && result.invoice !== '') {
+				invoice = result.invoice;
+			}
+			if (result.html && result.html !== '') {
+				data.html = decodeURIComponent(result.html);
+			}
+		} catch (error) {
+			console.error(error);
+		}
+
+		isLoading = false;
+		await subscribeNostr();
+	}
+
+	async function verify(preimage: string, macaroon?: string) {
+		isLoading = true;
+		try {
+			const res = await fetch('/api/verify', {
+				method: 'POST',
+				body: JSON.stringify({ slug: data.slug, preimage, macaroon }),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			const result: SsrApiResponse = await res.json();
+			status = result.status;
+			if (result.invoice && result.invoice !== '') {
+				invoice = result.invoice;
+			}
+			if (result.html && result.html !== '') {
+				data.html = decodeURIComponent(result.html);
+			}
+		} catch (error) {
+			status = 'NEED_VERIFIED';
+		}
+		isLoading = false;
+	}
+
+	async function subscribeNostr() {
+		subscription = await subscribeFeed(nPubkey);
+		subscription.on('event', async (event) => {
+			// recieved invoice settlement
+			console.log("recieved nostr's DM ", event);
+			try {
+				const value = await normalize(event, servicer);
+				console.log("normalized nostr's DM ", value);
+				if (value.slug === data.slug) {
+					await verify(value.preimage);
+				}
+			} catch (error) {
+				console.error(error);
+				alert(error.message);
+			}
+		});
+	}
+
+	/** @param {MouseEvent} event */
+	async function handleClickWallet(event) {
+		event.preventDefault();
+
+		if (!('webln' in window && window.webln)) {
+			// Open dialog for Naitve wallet
+			window.open(`lightning:${invoice}`);
+			return;
+		}
+
+		// WebLN
+		const preimage = await openPayment(invoice);
+		if (!!preimage) {
+			await verify(preimage);
+		}
+	}
 
 	/** @param {MouseEvent} event */
 	function handleClickInvoice(event) {
 		event.preventDefault();
-		navigator.clipboard.writeText(data.paywall.invoice);
+		navigator.clipboard.writeText(invoice);
 		dialog.showModal();
 		// close if clicked outside the modal
 		dialog.addEventListener('click', function (event) {
@@ -31,32 +165,63 @@
 	}
 
 	/** @param {MouseEvent} event */
-	async function handleClickWallet(event) {
+	async function handleClickNip07(event) {
 		event.preventDefault();
-		const preimage = await openPayment(data.paywall.invoice);
-		if (!!preimage) {
-			const res = await fetch('/api/verify', {
-				method: 'POST',
-				body: JSON.stringify({ slug: data.slug, preimage }),
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-			const result = await res.json();
-			data.html = decodeURIComponent(result.html);
-			data.paywall = {
-				status: 200,
-				isPaywall: false,
-				wordCount: 0,
-				invoice: ''
-			};
+		if (window.nostr) {
+			try {
+				const pk = await window.nostr.getPublicKey();
+				const npub = nip19.npubEncode(pk);
+
+				setNPubkey(npub, '', true);
+				await challenge();
+			} catch (error) {
+				console.error(error);
+				alert(error.message);
+			}
 		}
 	}
+
+	/** @param {MouseEvent} event */
+	function handleClickNostrSeckey(event) {
+		event.preventDefault();
+		const elm: HTMLInputElement = document.querySelector('input[name="nostrSeckey"]');
+		try {
+			const npub = getPubkeyFromNSeckey(elm.value);
+			setNPubkey(npub, elm.value, false);
+			challenge();
+		} catch (error) {
+			console.error(error);
+			alert(error.message);
+		}
+	}
+
+	$: setNPubkey = (nostrPubkey: string, nostrSeckey: string, isNip07: boolean) => {
+		nPubkey = nostrPubkey;
+		nostrAccount.nseckey.set(nostrSeckey);
+		nostrAccount.npubkey.set(nostrPubkey);
+		nostrAccount.isNip07.set(isNip07);
+	};
 </script>
 
 <svelte:head>
 	<title>{data.post.title} | {Title}</title>
-	<meta name="description" content="" />
+	<meta name="description" content={data.post.preview.text} />
+	<meta name="author" content={Author} />
+
+	<!-- Facebook Meta Tags -->
+	<meta property="og:url" content={url} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={data.post.title} />
+	<meta property="og:description" content={data.post.preview.text} />
+	<!-- <meta property="og:image" content={ogImage} /> -->
+
+	<!-- Twitter Meta Tags -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta property="twitter:domain" content={SiteUrl} />
+	<meta property="twitter:url" content={url} />
+	<meta name="twitter:title" content={data.post.title} />
+	<meta name="twitter:description" content={data.post.preview.text} />
+	<!-- <meta name="twitter:image" content={ogImage} /> -->
 </svelte:head>
 
 <article class="post">
@@ -70,21 +235,38 @@
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	<div class="post-content">{@html data.html}</div>
 
-	{#if data.paywall.isPaywall}
+	{#if status !== 'VERIFIED_OR_NON_PAYWALLCONTENT'}
 		<div class="paywall">
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
-			<div class="paywall-wordcount">{data.paywall.wordCount} characters</div>
-			{#if data.paywall.status === 402}
+			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>
+
+			{#if status === 'NEED_NOSTR'}
+				<div>
+					<input type="text" name="nostrSeckey" placeholder="nsec123..." />
+					<button type="button" on:click={handleClickNostrSeckey}>input</button>
+					<button type="button" on:click={handleClickNip07}>NIP-07</button>
+					<div class="paywall-nostr-description">
+						<p class="paywall-nostr-description-text">
+							We use LightningNetwork for paywalled content. First, log in to Nostr. Please pay the
+							LightningNetwork invoice after that. Nostr is used for the settlement synchronization
+							which passes the preimage by NIP-04 after paying the invoice. nsecKey is only stored
+							locally and doesn't share with server.
+						</p>
+					</div>
+				</div>
+			{:else if status === 'NEED_PAYMENT'}
 				<div>
 					<button type="button" class="paywall-invoice-qr" on:click={handleClickInvoice}>
-						{#await qrcode.toDataURL(data.paywall.invoice) then value}
+						{#await qrcode.toDataURL(invoice) then value}
 							<img src={value} alt="Invoice qr code" />
 						{/await}
 					</button>
 				</div>
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<div class="paywall-invoice-text" on:click={handleClickInvoice}>{data.paywall.invoice}</div>
+				<div class="paywall-invoice-text" on:click={handleClickInvoice}>
+					{invoice}
+				</div>
 
 				{#if !DEVTOOLS_ON}
 					<div>
@@ -103,6 +285,14 @@
 						</form>
 					</div>
 				{/if}
+			{:else if status === 'NEED_INVOICE'}
+				<p>Failed to issue a invoice. Please try again after.</p>
+			{:else if status === 'NEED_VERIFIED'}
+				<p>Failed to verify the payment. Please try again after, or please inquiry.</p>
+			{:else if isLoading}
+				<div class="paywall-loading">
+					<DoubleBounce size="60" unit="px" duration="1s" />
+				</div>
 			{:else}
 				<p>Sorry, somethig wrong...</p>
 			{/if}
@@ -116,7 +306,7 @@
 			<button on:click={handleClickClose}>x</button>
 		</div>
 		<p>Copied.</p>
-		<div class="donation-address-text"><span>{data.paywall.invoice}</span></div>
+		<div class="donation-address-text"><p>{invoice}</p></div>
 	</div>
 </dialog>
 
@@ -187,6 +377,14 @@
 		font-size: 0.8rem;
 		padding-bottom: 1rem;
 	}
+	.paywall-nostr-description {
+		max-width: 300px;
+		margin: 0 auto;
+	}
+	.paywall-nostr-description-text {
+		font-size: 0.8rem;
+		text-align: left;
+	}
 	.paywall-invoice-qr {
 		cursor: pointer;
 		border: transparent;
@@ -201,6 +399,10 @@
 		text-overflow: ellipsis;
 		overflow: hidden;
 		white-space: nowrap;
+	}
+	.paywall-loading {
+		display: flex;
+		justify-content: center;
 	}
 	.devtools {
 		color: red;
