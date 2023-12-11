@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { DoubleBounce } from 'svelte-loading-spinners';
 	import LockIcon from 'svelte-material-icons/Lock.svelte';
 	import qrcode from 'qrcode';
-	import { getPublicKey, nip19 } from 'nostr-tools';
+	import { nip19 } from 'nostr-tools';
+	import type { NDKSubscription } from '@nostr-dev-kit/ndk';
 
 	import { dev } from '$app/environment';
 	import { PUBLIC_DEVTOOLS_ON } from '$env/static/public';
 	import { Author, SiteUrl, Title } from '$lib/constants';
 	import { displayDate } from '$lib/utils';
 	import { openPayment } from '$lib/webln';
-	import { npubkey, nseckey } from '$lib/data/nostr';
+	import { nostrAccount } from '$lib/stores/nostrAccount';
 	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
+	import { getPubkeyFromNSeckey, normalize, subscribeFeed } from '$lib/nostr';
+	import { servicer } from '$lib/stores/ndk';
 
 	export let data;
 
@@ -19,17 +22,35 @@
 	const url = `${SiteUrl}/articles/${data.post.slug}`;
 
 	let dialog;
-	let isLoading = true;
-	let nPubkey = '';
+	let isLoading = false;
+	let nPubkey = nostrAccount.npubkey.get();
 	let invoice = '';
 	let status: PaywallStatus = 'NEED_NOSTR';
+	let subscription: NDKSubscription;
 
-	onMount(() => {
-		challenge();
+	onMount(async () => {
+		if (!data.post.paywall.hasPaywallContent) {
+			return;
+		}
+		// already purchased case
+		const purchaseHistory = nostrAccount.purchaseHistory.get();
+		const found = purchaseHistory.find((val) => val.slug === data.slug);
+		if (!!found) {
+			// TODO: should attach macaroon as well
+			await verify(found.preimage);
+			return;
+		}
+		// challenge
+		await challenge();
+	});
+	onDestroy(() => {
+		if (!!subscription) {
+			subscription.stop();
+		}
 	});
 
 	async function challenge() {
-		nPubkey = npubkey.get();
+		nPubkey = nostrAccount.npubkey.get();
 		if (nPubkey === '') {
 			return;
 		}
@@ -37,7 +58,7 @@
 		isLoading = true;
 
 		try {
-			const res = await fetch('/api/mint', {
+			const res = await fetch('/api/challenge', {
 				method: 'POST',
 				body: JSON.stringify({ slug: data.slug, nPubkey, price: data.post.paywall.price }),
 				headers: {
@@ -52,26 +73,17 @@
 			if (result.html && result.html !== '') {
 				data.html = decodeURIComponent(result.html);
 			}
-		} catch (err) {
-			console.error(err);
+		} catch (error) {
+			console.error(error);
 		}
 
 		isLoading = false;
+		await subscribeNostr();
 	}
 
-	/** @param {MouseEvent} event */
-	async function handleClickWallet(event) {
-		event.preventDefault();
-
-		if (!('webln' in window && window.webln)) {
-			// Open dialog for Naitve wallet
-			window.open(`lightning:${invoice}`);
-			return;
-		}
-
-		// WebLN
-		const preimage = await openPayment(invoice);
-		if (!!preimage) {
+	async function verify(preimage: string) {
+		isLoading = true;
+		try {
 			const res = await fetch('/api/verify', {
 				method: 'POST',
 				body: JSON.stringify({ slug: data.slug, preimage }),
@@ -87,6 +99,44 @@
 			if (result.html && result.html !== '') {
 				data.html = decodeURIComponent(result.html);
 			}
+		} catch (error) {
+			status = 'NEED_VERIFIED';
+		}
+		isLoading = false;
+	}
+
+	async function subscribeNostr() {
+		subscription = await subscribeFeed(nPubkey);
+		subscription.on('event', async (event) => {
+			// recieved invoice settlement
+			console.log("recieved nostr's DM ", event);
+			try {
+				const value = await normalize(event, servicer);
+				console.log("normalized nostr's DM ", value);
+				if (value.slug === data.slug) {
+					await verify(value.preimage);
+				}
+			} catch (error) {
+				console.error(error);
+				alert(error.message);
+			}
+		});
+	}
+
+	/** @param {MouseEvent} event */
+	async function handleClickWallet(event) {
+		event.preventDefault();
+
+		if (!('webln' in window && window.webln)) {
+			// Open dialog for Naitve wallet
+			window.open(`lightning:${invoice}`);
+			return;
+		}
+
+		// WebLN
+		const preimage = await openPayment(invoice);
+		if (!!preimage) {
+			await verify(preimage);
 		}
 	}
 
@@ -117,11 +167,11 @@
 				const pk = await window.nostr.getPublicKey();
 				const npub = nip19.npubEncode(pk);
 
-				setNPubkey(npub, '');
-				challenge();
-			} catch (err) {
-				console.error(err);
-				alert(`Maybe you rejected once? Please reload.`);
+				setNPubkey(npub, '', true);
+				await challenge();
+			} catch (error) {
+				console.error(error);
+				alert(error.message);
 			}
 		}
 	}
@@ -131,28 +181,20 @@
 		event.preventDefault();
 		const elm: HTMLInputElement = document.querySelector('input[name="nostrSeckey"]');
 		try {
-			const value = elm.value;
-			const matched = value.match(/nsec1\w+/);
-			if (!matched) {
-				throw Error(`nSeckey is incorrect: ${value}`);
-			}
-
-			// encode npPubKey
-			const { data } = nip19.decode(value);
-			const pk = getPublicKey(data as string);
-			const npub = nip19.npubEncode(pk);
-
-			setNPubkey(value, npub);
+			const npub = getPubkeyFromNSeckey(elm.value);
+			setNPubkey(npub, elm.value, false);
 			challenge();
-		} catch (err) {
-			console.error(err);
+		} catch (error) {
+			console.error(error);
+			alert(error.message);
 		}
 	}
 
-	$: setNPubkey = (nostrPubkey, nostrSeckey) => {
+	$: setNPubkey = (nostrPubkey: string, nostrSeckey: string, isNip07: boolean) => {
 		nPubkey = nostrPubkey;
-		nseckey.set(nostrSeckey);
-		npubkey.set(nostrPubkey);
+		nostrAccount.nseckey.set(nostrSeckey);
+		nostrAccount.npubkey.set(nostrPubkey);
+		nostrAccount.isNip07.set(isNip07);
 	};
 </script>
 

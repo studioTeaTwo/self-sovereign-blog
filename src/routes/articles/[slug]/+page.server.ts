@@ -1,4 +1,4 @@
-import { postContents, postSummaries } from '$lib/data/posts';
+import { postContents, postSummaries } from '$lib/stores/posts';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { devToolsActions } from '$lib/devTools';

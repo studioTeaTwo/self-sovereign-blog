@@ -1,16 +1,15 @@
 import { CookieOptions } from '$lib/constants';
-import { postContents } from '$lib/data/posts';
+import { postContents } from '$lib/stores/posts';
 import { createInvoice, isValidL402token, isWaitingToPayInvoice, verify } from '$lib/l402';
 import type { SsrApiResponse } from '$lib/type';
 import { json, type Cookies } from '@sveltejs/kit';
 
-// This is called on mounting component or on inputten Nostr seckey or on received Nostr DM
-// Authenticate & Authroize L402
+// This is called on mounting component or on inputten Nostr seckey or NIP-07.
+// Authenticate & Authroize L402.
 // HttpStatus 500 keeps current PaywallStatus because request self failed.
 export async function POST({ request, cookies, fetch }) {
 	const { slug, nPubkey, price } = await request.json();
-	console.log(request);
-	console.log('challenge', request.url.href, cookies.get(slug));
+	console.log('challenge', request.url, cookies.get(slug));
 	const record = cookies.get(slug);
 
 	// have preimage
@@ -21,22 +20,23 @@ export async function POST({ request, cookies, fetch }) {
 		try {
 			result = await verify(r.macaroon, r.preimage, fetch);
 			console.log('verify ', result);
+			if (result.status !== 200) {
+				// TODO: server data may clear the data such as restarting.
+				const response: SsrApiResponse = { status: 'NEED_VERIFIED', reason: result.reason };
+				return json(response, { status: result.status });
+			}
 		} catch (error) {
 			console.error('verify failed: ', error);
 			const response: SsrApiResponse = { status: 'NEED_VERIFIED', reason: error.message };
 			return json(response, { status: 500 });
 		}
 
-		if (result.status === 200) {
-			// respond complete article
-			const response: SsrApiResponse = {
-				status: 'VERIFIED_OR_NON_PAYWALLCONTENT',
-				html: encodeURIComponent(postContents[slug].html)
-			};
-			return json(response, { status: 200 });
-		} else {
-			// TODO: respond the case of failure reasons(expiried,etc.)
-		}
+		// respond complete article
+		const response: SsrApiResponse = {
+			status: 'VERIFIED_OR_NON_PAYWALLCONTENT',
+			html: encodeURIComponent(postContents[slug].html)
+		};
+		return json(response, { status: 200 });
 
 		// have invoice
 	} else if (isWaitingToPayInvoice(record)) {

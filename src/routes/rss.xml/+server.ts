@@ -3,7 +3,7 @@
 // credit: https://scottspence.com/posts/make-an-rss-feed-with-sveltekit#add-posts-for-the-rss-feed
 
 import { Title, SiteUrl } from '$lib/constants';
-import { postSummaries } from '$lib/data/posts';
+import { postSummaries } from '$lib/stores/posts';
 
 export const prerender = true;
 

@@ -33,46 +33,52 @@ export async function openPayment(invoice: string) {
 		console.log('succeeded payment: ', result);
 
 		return result.preimage;
-	} catch (err) {
+	} catch (error) {
 		// note: thease messages are Alby's implementation
 		// Because `RejectionError`, etc. doesn't work currently.
-		if (err.message === 'Your browser has no WebLN provider') {
+		if (error.message === 'Your browser has no WebLN provider') {
 			alert(errorMessages.MissingProviderError);
 			return;
 		} else if (
-			err.message ===
+			error.message ===
 			'webln.enable() failed (rejecting further window.webln calls until the next reload)'
 		) {
 			alert(`You rejected once. Reload again.`);
 			return;
-		} else if (err.message === 'User rejected') {
+		} else if (error.message === 'User rejected') {
 			// Do nothing, because the user rejected to pay.
 			return;
-		} else if (err.message === 'invoice is already paid' || err.message === 'Prompt was closed') {
+		} else if (
+			error.message === 'invoice is already paid' ||
+			error.message === 'Prompt was closed'
+		) {
 			// Do nothing, because it assume that prompt has already displayed from wallet.
 			return;
 		}
 
 		// Along with WebLN's spec
-		if (err.constructor === MissingProviderError) {
+		if (error.constructor === MissingProviderError) {
 			return;
-		} else if (err.constructor === RejectionError) {
+		} else if (error.constructor === RejectionError) {
 			// Do nothing, because the user rejected to pay.
 			return;
-		} else if (err.constructor === ConnectionError) {
+		} else if (error.constructor === ConnectionError) {
 			alert(errorMessages.ConnectionError);
 			return;
-		} else if (err.constructor === RoutingError) {
+		} else if (error.constructor === RoutingError) {
 			alert(errorMessages.RoutingError);
 			return;
-		} else if (err.constructor === InvalidDataError) {
+		} else if (error.constructor === InvalidDataError) {
 			alert(errorMessages.InvalidDataError);
 			return;
-		} else if (err.constructor === UnsupportedMethodError || err.constructor === InternalError) {
+		} else if (
+			error.constructor === UnsupportedMethodError ||
+			error.constructor === InternalError
+		) {
 			// Pass to default message
 		}
 
-		console.error(err);
-		alert(err.message);
+		console.error(error);
+		alert(error.message);
 	}
 }

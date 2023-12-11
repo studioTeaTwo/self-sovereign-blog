@@ -1,27 +1,40 @@
 import { json } from '@sveltejs/kit';
 import { CookieOptions } from '$lib/constants';
 import { verify } from '$lib/l402';
-import { postContents } from '$lib/data/posts';
+import { postContents } from '$lib/stores/posts';
+import type { SsrApiResponse } from '$lib/type';
 
-// This is used by WebLN payment.
+// This is called in the following cases:
+// 1. WebLN payment
+// 2. Receiving Nostr's DM
+// 3. purchased history in LocalStorage
 export async function POST({ request, cookies, fetch }) {
 	const { slug, preimage } = await request.json();
 	console.log('api verify', slug, preimage, cookies.get(slug));
-	const cookie = JSON.parse(cookies.get(slug));
 
 	try {
+		// There may be cases where it has been deleted.
+		const cookie = JSON.parse(cookies.get(slug));
+
 		const result = await verify(cookie.macaroon, preimage, fetch);
 		if (result.status !== 200) {
-			return json({ reason: result.reason }, { status: result.status });
+			// TODO: server data may clear the data such as restarting.
+			const response: SsrApiResponse = { status: 'NEED_VERIFIED', reason: result.reason };
+			return json(response, { status: result.status });
 		}
+
+		cookie.preimage = preimage;
+		cookie.count++;
+		cookies.set(slug, JSON.stringify(cookie), CookieOptions);
 	} catch (error) {
 		console.error('verify failed: ', error);
-		return json({ reason: error.message }, { status: 402 });
+		const response: SsrApiResponse = { status: 'NEED_VERIFIED', reason: error.message };
+		return json(response, { status: 402 });
 	}
 
-	cookie.preimage = preimage;
-	cookie.count++;
-	cookies.set(slug, JSON.stringify(cookie), CookieOptions);
-
-	return json({ html: encodeURIComponent(postContents[slug].html) }, { status: 200 });
+	const response: SsrApiResponse = {
+		status: 'VERIFIED_OR_NON_PAYWALLCONTENT',
+		html: encodeURIComponent(postContents[slug].html)
+	};
+	return json(response, { status: 200 });
 }
