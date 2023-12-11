@@ -13,8 +13,8 @@
 	import { openPayment } from '$lib/webln';
 	import { nostrAccount } from '$lib/stores/nostrAccount';
 	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
-	import { getPubkeyFromNSeckey, getRelayList, normalize, subscribeFeed } from '$lib/nostr';
-	import { servicer } from '$lib/stores/ndk';
+	import { getPubkeyFromNSeckey, getUserRelayList, normalize, subscribeFeed } from '$lib/nostr';
+	import { ndk, servicer } from '$lib/stores/ndk';
 
 	export let data;
 
@@ -32,6 +32,8 @@
 		if (!data.post.paywall.hasPaywallContent) {
 			return;
 		}
+		// put here to fix mobile browser
+		await ndk.connect();
 		// already purchased case
 		const purchaseHistory = nostrAccount.purchaseHistory.get();
 		const found = purchaseHistory.find((val) => val.slug === data.slug);
@@ -54,10 +56,10 @@
 			return;
 		}
 
-		isLoading = true;
-
 		try {
-			const relayList = await getRelayList(nPubkey);
+			isLoading = true;
+
+			const relayList = await getUserRelayList(nPubkey);
 			const res = await fetch('/api/challenge', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -80,15 +82,18 @@
 			}
 		} catch (error) {
 			console.error(error);
+		} finally {
+			// in case of nested blocks
+			isLoading = false;
 		}
 
-		isLoading = false;
 		await subscribeNostr();
 	}
 
 	async function verify(preimage: string, macaroon?: string) {
-		isLoading = true;
 		try {
+			isLoading = true;
+
 			const res = await fetch('/api/verify', {
 				method: 'POST',
 				body: JSON.stringify({ slug: data.slug, preimage, macaroon }),
@@ -106,8 +111,10 @@
 			}
 		} catch (error) {
 			status = 'NEED_VERIFIED';
+		} finally {
+			// in case of nested blocks
+			isLoading = false;
 		}
-		isLoading = false;
 	}
 
 	async function subscribeNostr() {
@@ -124,14 +131,14 @@
 			} catch (error) {
 				console.error(error);
 				alert(error.message);
+			} finally {
+				// in case of nested blocks
+				isLoading = false;
 			}
 		});
 	}
 
-	/** @param {MouseEvent} event */
-	async function handleClickWallet(event) {
-		event.preventDefault();
-
+	async function handleClickWallet() {
 		if (!('webln' in window && window.webln)) {
 			// Open dialog for Naitve wallet
 			window.open(`lightning:${invoice}`);
@@ -145,9 +152,7 @@
 		}
 	}
 
-	/** @param {MouseEvent} event */
-	function handleClickInvoice(event) {
-		event.preventDefault();
+	function handleClickInvoice() {
 		navigator.clipboard.writeText(invoice);
 		dialog.showModal();
 		// close if clicked outside the modal
@@ -158,15 +163,11 @@
 		});
 	}
 
-	/** @param {MouseEvent} event */
-	function handleClickClose(event) {
-		event.preventDefault();
+	function handleClickClose() {
 		dialog.close();
 	}
 
-	/** @param {MouseEvent} event */
-	async function handleClickNip07(event) {
-		event.preventDefault();
+	async function handleClickNip07() {
 		if (window.nostr) {
 			try {
 				const pk = await window.nostr.getPublicKey();
@@ -177,13 +178,14 @@
 			} catch (error) {
 				console.error(error);
 				alert(error.message);
+			} finally {
+				// in case of nested blocks
+				isLoading = false;
 			}
 		}
 	}
 
-	/** @param {MouseEvent} event */
-	async function handleClickNostrSeckey(event) {
-		event.preventDefault();
+	async function handleClickNostrSeckey() {
 		const elm: HTMLInputElement = document.querySelector('input[name="nostrSeckey"]');
 		try {
 			const npub = getPubkeyFromNSeckey(elm.value);
@@ -192,6 +194,9 @@
 		} catch (error) {
 			console.error(error);
 			alert(error.message);
+		} finally {
+			// in case of nested blocks
+			isLoading = false;
 		}
 	}
 
@@ -240,7 +245,11 @@
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
 			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>
 
-			{#if status === 'NEED_NOSTR'}
+			{#if isLoading}
+				<div class="paywall-loading">
+					<DoubleBounce size="60" unit="px" duration="1s" />
+				</div>
+			{:else if status === 'NEED_NOSTR'}
 				<div>
 					<input type="text" name="nostrSeckey" placeholder="nsec123..." />
 					<button type="button" on:click={handleClickNostrSeckey}>input</button>
@@ -289,10 +298,6 @@
 				<p>Failed to issue a invoice. Please try again after.</p>
 			{:else if status === 'NEED_VERIFIED'}
 				<p>Failed to verify the payment. Please try again after, or please inquiry.</p>
-			{:else if isLoading}
-				<div class="paywall-loading">
-					<DoubleBounce size="60" unit="px" duration="1s" />
-				</div>
 			{:else}
 				<p>Sorry, somethig wrong...</p>
 			{/if}

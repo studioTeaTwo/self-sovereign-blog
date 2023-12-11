@@ -4,7 +4,7 @@ import {
 	NDKNip07Signer,
 	type NDKFilter,
 	type NDKEvent,
-	type NDKUser
+	NDKUser
 } from '@nostr-dev-kit/ndk';
 
 import { nostrAccount } from './stores/nostrAccount';
@@ -25,7 +25,8 @@ export async function subscribeFeed(nPubkey: string) {
 	const filter: NDKFilter = {
 		kinds: [4],
 		authors: [servicePubkey],
-		'#p': [userPubkey]
+		'#p': [userPubkey],
+		since: 1702365600
 		// '#L': ['#l402'] ,
 		// '#l': [ServiceName, '#l402']
 		// '#L': ['l402token'] ,
@@ -34,20 +35,39 @@ export async function subscribeFeed(nPubkey: string) {
 
 	setSigner();
 
-	await ndk.connect();
 	const subscription = ndk.subscribe(filter);
 	await subscription.start();
 
 	return subscription;
 }
 
-export async function getRelayList(nPubkey: string) {
+export async function getUserRelayList(nPubkey: string) {
 	if (!browser) {
 		return;
 	}
 	const pubkey = nip19.decode(nPubkey).data as string;
-	const relay = await ndk.getUser({ pubkey }).relayList();
-	return relay.readRelayUrls;
+	const user = await ndk.getUser({ pubkey });
+
+	// Prioritize which relay list to get.
+	// This is a pain and needs to improve on what works best.
+	const relay = await user.relayList();
+	if (!!relay && relay.relays && relay.relays.length > 0) {
+		// assume kind:10002 or kind:3
+		return relay.relays;
+	}
+	await user.fetchProfile();
+	if (user.profile.relays && user.profile.relays.length > 0) {
+		// assume kind:0
+		return user.profile.relays;
+	}
+	if (user.profile.nip05) {
+		const nip05 = await NDKUser.fromNip05(user.profile.nip05);
+		if (nip05.relayUrls && nip05.relayUrls.length > 0) {
+			// assume from json of NIP-05
+			return nip05.relayUrls;
+		}
+	}
+	return [];
 }
 
 export function getPubkeyFromNSeckey(nseckey: string) {
