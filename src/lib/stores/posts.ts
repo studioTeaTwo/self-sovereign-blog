@@ -28,7 +28,7 @@ export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', {
 
 		const htmlString = post.default.render().html;
 		const hasPaywallContent = hasL402Content(htmlString);
-		const wordCount = countWordOfPaywall(htmlString);
+		const wordCount = hasPaywallContent ? countWordOfPaywall(htmlString) : 0;
 
 		return {
 			...post.metadata,
@@ -107,7 +107,7 @@ function eraceL402Content(html: string) {
 	return resut;
 }
 function countWordOfPaywall(html: string) {
-	const resut = eraceL402Content(html);
-	const wordCount = parse(resut).structuredText.length;
-	return wordCount;
+	// TODO: make symbol&parse of l402 more practical
+	const resut = html.substring(html.indexOf('<hr id="l402" hidden>'));
+	return parse(resut).structuredText.length;
 }

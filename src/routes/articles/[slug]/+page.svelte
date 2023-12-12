@@ -334,6 +334,9 @@
 		padding: 2rem;
 		overflow-x: auto;
 	}
+	:global(.post p>a) {
+		text-decoration-line: underline;
+	}
 	article {
 		min-width: 90vw;
 		inline-size: 90vw;

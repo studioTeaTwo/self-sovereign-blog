@@ -75,6 +75,9 @@
 		text-decoration: none;
 		color: inherit;
 	}
+	header {
+		margin: 1rem;
+	}
 	main {
 		flex-grow: 1;
 	}
