@@ -3,7 +3,7 @@ import { PUBLIC_BLOG_SERVER, PUBLIC_L402_SERVER, PUBLIC_SERVICE_NPUBKEY } from '
 import type { CookieSerializeOptions } from 'cookie';
 
 // Blog author
-export const Title = 'Self Sovereign Blog';
+export const Title = 'Self-Sovereign Blog';
 export const Author = 'TeaTwo';
 export const BitcoinDonationAddress = 'bc1q8pmsy0xfrkpr3vky9kw5kjmqrm0fsg70q963dg';
 

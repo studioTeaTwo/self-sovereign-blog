@@ -1,20 +1,21 @@
 @startuml
 
 == challenge phase ==
-user -> server: Challenge Request
+user -> L402server: Challenge Request
 note left: NostrPubKey
-server -> server: Create macaroon
-server -> LND: Invoice Request
-server <-- LND: Invoice Response
-user <-- server: Challenge Response
+L402server -> L402server: Keep NostrPubKey
+L402server -> L402server: Create macaroon
+L402server -> LND: Invoice Request
+L402server <-- LND: Invoice Response
+user <-- L402server: Challenge Response
 note right: macaroon + invoice
 
 == answer creation ==
 user -> LND: Payment
 note left: invoice
-server <-- LND: Settlement nortification
-server -> server: Get the preimage
-server -> Nostr: Event Request
+L402server <-- LND: Settlement nortification
+L402server -> L402server: Get the preimage
+L402server -> Nostr: Event Request
 note left
   the preimage encrypted
   by NostrPubKey
@@ -23,9 +24,9 @@ user <-- Nostr: Event Response
 user -> user: Decrypt the preimage by NostrSecKey
 
 == response phase ==
-user -> server: Answer Request
+user -> L402server: Answer Request
 note left: macaroon + preimage
-server -> server: Verify
-user <-- server: Answer Response
+L402server -> L402server: Verify
+user <-- L402server: Answer Response
 
 @enduml

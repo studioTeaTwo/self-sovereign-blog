@@ -1,38 +1,35 @@
-# create-svelte
+# Self-Sovereign Blog
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+The self-sovereign blog is a showcase of "paywall without intermediaries".
 
-## Creating a project
+This blog is handcrafted by SvelteKit and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and realizes fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
 
-If you're seeing this, you've probably already done this step. Congrats!
+Both Bitcoin and Nostr are the people's networks without specific authorities. So, this paywall is "Self-Sovereignty", with no middlemen involved.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+The demo is [here](posts/002_ligtning-nostr/after.webm).
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+## Overview
 
-## Developing
+![](doc/overview.png)
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+The front server is responsible for:
 
-```bash
-npm run dev
+1.  delivering blog posts that are markdown-based
+2.  unlocking paywalled content
+3.  delivering invoices to remove the paywall
+4.  setting up to subscribe to encypted messages to share the payment proof
+5.  asking payment authentication/authorization related to all of the above to the API server
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+Payment authentication/authorization for paywall follows the [Lightning HTTP 402 Protocol (L402 protocol)](https://github.com/lightning/blips/pull/26) that repurposes the `HTTP 402 Payment Required` error code and is a standardized way of adding micropayments to any existing HTTP-REST or gRPC API.
 
-## Building
+The API server coodinates two networks that are Lightning Network for payments and Nostr protocol for messagings, and executes L402 protocol. You can check the [sample implementation](https://github.com/studioTeaTwo/simple-l402-server) for this blog which wraps the L402 API Key proxy called [Aperture](https://github.com/lightninglabs/aperture).
 
-To create a production version of your app:
+Lightning Network is Bitcoin's layer2 used for payment network. Bitcoin is decentralized internet money, so users can pay from any wallet that supports Lightning Network.
 
-```bash
-npm run build
-```
+Nostr protocol is a decentralized network similar to Bitcoin, which is used on this blog to share the proof of payment safety and securely without the need for any counterparty. To achieve this, we adopt [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md) to exchange direct message encrypted with AES-256-CBC.
 
-You can preview the production build with `npm run preview`.
+## L402 protocol flow
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+![](doc/challenge-response.sequence.png)
+
+TODO
