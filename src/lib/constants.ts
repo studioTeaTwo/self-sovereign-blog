@@ -15,6 +15,7 @@ export const L402server = dev ? 'http://localhost:8180' : PUBLIC_L402_SERVER;
 // Nostr
 // These must match https://github.com/studioTeaTwo/simple-l402-server
 export const RelayList = [
+	'wss://relayable.org',
 	'wss://relay.damus.io',
 	'wss://relay.snort.social',
 	'wss://relay.primal.net',

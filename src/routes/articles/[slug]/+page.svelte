@@ -256,10 +256,11 @@
 					<button type="button" on:click={handleClickNip07}>NIP-07</button>
 					<div class="paywall-nostr-description">
 						<p class="paywall-nostr-description-text">
-							We use LightningNetwork for paywalled content. First, log in to Nostr, then pay your
-							LightningNetwork invoice. Nostr is used for the synchronization of payment proof which
-							passes the preimage of invoice by NIP-04 after paying. Your Nostr's SecKey is only
-							stored locally and doesn't share with server.
+							We use LightningNetwork to purchase the paywalled content. First, log in to Nostr,
+							then pay your LightningNetwork invoice. Nostr is used to synchronize the payment
+							proof, which is a preimage of the invoice, via NIP-04's direct message after payment.
+							Your Nostr's secret key is only stored locally and doesn't share with server. With
+							NIP-07, you don't even need a private key.
 						</p>
 					</div>
 				</div>
