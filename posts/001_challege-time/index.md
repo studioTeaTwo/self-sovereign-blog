@@ -13,7 +13,7 @@ It's a challege time!
 
 All you need is to get the `preimage` of the invoice below and to input it in devtools. I assume you need to take some actions. Chop your own wood, and it will warm you twice.
 
-<hr id="l402" hidden>
+<hr class="l402" hidden>
 
 ## 🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉
 

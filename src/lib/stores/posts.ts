@@ -98,16 +98,16 @@ function addTimezoneOffset(date) {
 
 function hasL402Content(html: string) {
 	// TODO: make symbol&parse of l402 more practical
-	return html.includes('<hr id="l402" hidden>');
+	return html.includes('<hr class="l402" hidden>');
 }
 // hide the content wrapped with L402
 function eraceL402Content(html: string) {
 	// TODO: make symbol&parse of l402 more practical
-	const resut = html.substring(0, html.indexOf('<hr id="l402" hidden>'));
+	const resut = html.substring(0, html.indexOf('<hr class="l402" hidden>'));
 	return resut;
 }
 function countWordOfPaywall(html: string) {
 	// TODO: make symbol&parse of l402 more practical
-	const resut = html.substring(html.indexOf('<hr id="l402" hidden>'));
+	const resut = html.substring(html.indexOf('<hr class="l402" hidden>'));
 	return parse(resut).structuredText.length;
 }

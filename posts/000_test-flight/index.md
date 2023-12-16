@@ -7,7 +7,7 @@ preview: The 🥷 ships by stealth. Are you ready?
 
 The 🥷 ships by stealth. Are you ready?
 
-<hr id="l402" hidden>
+<hr class="l402" hidden>
 Good!
 
 <p style="font-style: italic;">Taking off...</p>

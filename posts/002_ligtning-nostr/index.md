@@ -20,4 +20,4 @@ Entering the preimage manually is a problem. Nostr will be a solution.
 
 I'll post an overview and technical details at a later date, though, you can right now experience it below. Of course, it is also able to prevent Nostr's private key from exposing using NIP-07.
 
-<hr id="l402" hidden>
+<hr class="l402" hidden>
