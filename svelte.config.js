@@ -24,8 +24,7 @@ const config = {
 		},
 
 		prerender: {
-			entries: ['*']
-			// entries: ['*', '/sitemap.xml', '/rss.xml']
+			entries: ['*', '/rss.xml', '/.well-known/nostr.json']
 		}
 	}
 };
