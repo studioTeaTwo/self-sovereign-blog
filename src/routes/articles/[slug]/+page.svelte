@@ -240,7 +240,7 @@
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	<div class="post-content">{@html data.html}</div>
 
-	{#if status !== 'VERIFIED_OR_NON_PAYWALLCONTENT'}
+	{#if data.post.paywall.hasPaywallContent && status !== 'VERIFIED_OR_NON_PAYWALLCONTENT'}
 		<div class="paywall">
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
 			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>
