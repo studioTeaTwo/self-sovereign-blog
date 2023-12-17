@@ -58,7 +58,8 @@ export async function getUserRelayList(nPubkey: string) {
 	await user.fetchProfile();
 	if (user.profile.relays && user.profile.relays.length > 0) {
 		// assume kind:0
-		return user.profile.relays;
+		// the reason of string[]: https://github.com/nostr-dev-kit/ndk/blob/07dfd1a8b61acbbb93998fd591fd751760f99494/ndk/src/user/index.ts#L129
+		return user.profile.relays as unknown as string[];
 	}
 	if (user.profile.nip05) {
 		const nip05 = await NDKUser.fromNip05(user.profile.nip05);
@@ -155,11 +156,13 @@ function parseText(msg: string) {
 	);
 	const purchasedDate = array.find((v) => v.includes('settleDate=')).replace('settleDate=', '');
 	const preimage = array.find((v) => v.includes('preimage=')).replace('preimage=', '');
+	const paymentHash = array.find((v) => v.includes('paymentHash=')).replace('paymentHash=', '');
 	return {
 		slug,
 		price,
 		paidAmount,
 		purchasedDate,
-		preimage
+		preimage,
+		paymentHash
 	};
 }

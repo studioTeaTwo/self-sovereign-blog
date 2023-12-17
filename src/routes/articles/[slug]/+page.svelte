@@ -15,6 +15,8 @@
 	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
 	import { getPubkeyFromNSeckey, getUserRelayList, normalize, subscribeFeed } from '$lib/nostr';
 	import { ndk, servicer } from '$lib/stores/ndk';
+	import { excuteChallenge as executeChallenge } from '$lib/l402.js';
+	import { authInProcess } from '$lib/stores/l402.js';
 
 	export let data;
 
@@ -60,45 +62,32 @@
 			isLoading = true;
 
 			const relayList = await getUserRelayList(nPubkey);
-			const res = await fetch('/api/challenge', {
-				method: 'POST',
-				body: JSON.stringify({
-					slug: data.slug,
-					nPubkey,
-					relayList,
-					price: data.post.paywall.price
-				}),
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-			const result: SsrApiResponse = await res.json();
+			const result = await executeChallenge(data.slug, data.post.paywall.price, nPubkey, relayList);
 			status = result.status;
-			if (result.invoice && result.invoice !== '') {
+			if (result.invoice) {
 				invoice = result.invoice;
 			}
-			if (result.html && result.html !== '') {
-				data.html = decodeURIComponent(result.html);
-			}
+
+			// Wait to be payed invoice
+			await subscribeNostr(result.macaroon);
 		} catch (error) {
 			console.error(error);
 		} finally {
 			// in case of nested blocks
 			isLoading = false;
 		}
-
-		await subscribeNostr();
 	}
 
-	async function verify(preimage: string, macaroon?: string) {
+	async function verify(preimage: string, macaroon: string) {
 		try {
 			isLoading = true;
 
 			const res = await fetch('/api/verify', {
 				method: 'POST',
-				body: JSON.stringify({ slug: data.slug, preimage, macaroon }),
+				body: JSON.stringify({ slug: data.slug }),
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					Authorization: `L402 ${macaroon}:${preimage}`
 				}
 			});
 			const result: SsrApiResponse = await res.json();
@@ -117,7 +106,7 @@
 		}
 	}
 
-	async function subscribeNostr() {
+	async function subscribeNostr(macaroon: string) {
 		subscription = await subscribeFeed(nPubkey);
 		subscription.on('event', async (event) => {
 			// recieved invoice settlement
@@ -126,7 +115,7 @@
 				const value = await normalize(event, servicer);
 				console.log("normalized nostr's DM ", value);
 				if (value.slug === data.slug) {
-					await verify(value.preimage);
+					await verify(value.preimage, macaroon);
 				}
 			} catch (error) {
 				console.error(error);
@@ -148,7 +137,8 @@
 		// WebLN
 		const preimage = await openPayment(invoice);
 		if (!!preimage) {
-			await verify(preimage);
+			const macaroon = authInProcess.getMacaroon(data.slug);
+			await verify(preimage, macaroon);
 		}
 	}
 

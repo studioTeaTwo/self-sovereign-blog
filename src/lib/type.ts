@@ -26,28 +26,27 @@ export type PurchaseHistory = {
 	slug: string; // from DM content
 	price: number; // from DM content
 	paidAmount: number; // from DM content
+	paymentHash: string; // from DM content
 	preimage: string; // from DM content
 	macaroon: string; // from DM tag
 	purchasedDate: string; // from DM content
 	createdAt: number; // from Nostr event
+};
+export type AuthInProcess = {
+	slug: string;
+	price: number;
+	invoice: string;
+	macaroon: string;
 };
 
 export type SsrApiResponse = {
 	status: PaywallStatus;
 	reason?: string;
 	html?: string;
-	invoice?: string;
 };
 
 // ref: github.com/studioTeaTwo/simple-l402-server/l402.go
 export type L402ApiResponse = {
 	result: boolean;
 	reason: string;
-};
-
-export type L402Cookie = {
-	macaroon: string;
-	invoice: string;
-	preimage: string;
-	count: number;
 };
