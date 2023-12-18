@@ -10,6 +10,11 @@ on:
 jobs:
   build-check:
     runs-on: ubuntu-latest
+    env:
+      PUBLIC_DEVTOOLS_ON: false
+      PUBLIC_BLOG_SERVER: https://blog.app
+      PUBLIC_L402_SERVER: https://l402.api
+      PUBLIC_SERVICE_NPUBKEY: npub123
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -32,8 +37,7 @@ jobs:
       - name: build
         env:
           BASE_PATH: '/${{ github.event.repository.name }}'
-        run: |
-          npm run build
+        run: npm run build
       - name: lint
         run: npm run lint
       - name: type-check

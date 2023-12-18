@@ -1,28 +1,22 @@
 import { json } from '@sveltejs/kit';
-import { CookieOptions } from '$lib/constants';
 import { verify } from '$lib/l402';
 import { postContents } from '$lib/stores/posts';
-import type { L402Cookie, SsrApiResponse } from '$lib/type';
+import type { SsrApiResponse } from '$lib/type';
 
+// API to access paywalled content on the server side.
 // This is called in the following cases:
 // 1. WebLN payment
 // 2. Receiving Nostr's DM
 // 3. purchased history in LocalStorage
-export async function POST({ request, cookies, fetch }) {
-	const { slug, preimage, macaroon } = await request.json();
-	const cookie = cookies.get(slug);
+// HttpStatus 500 keeps current PaywallStatus because request self failed.
+export async function POST({ request, fetch }) {
+	const { slug } = await request.json();
+	const authorization = request.headers.get('Authorization');
 
-	console.log('api verify', slug, preimage, macaroon, cookies.get(slug));
-
-	let mac = macaroon;
-	// cookie may be cases where it has been deleted.
-	if (!macaroon && !!cookie) {
-		const c = JSON.parse(cookie);
-		mac = c.macaroon;
-	}
+	console.log('api verify', slug, authorization);
 
 	try {
-		const result = await verify(mac, preimage, fetch);
+		const result = await verify(authorization, fetch);
 		if (result.status !== 200) {
 			// TODO: server data may clear the data such as restarting.
 			const response: SsrApiResponse = { status: 'NEED_VERIFIED', reason: result.reason };
@@ -32,17 +26,6 @@ export async function POST({ request, cookies, fetch }) {
 		console.error('verify failed: ', error);
 		const response: SsrApiResponse = { status: 'NEED_VERIFIED', reason: error.message };
 		return json(response, { status: 402 });
-	}
-
-	// Update cookie
-	if (cookie) {
-		const c = JSON.parse(cookies.get(slug));
-		c.preimage = preimage;
-		c.count++;
-		cookies.set(slug, JSON.stringify(c), CookieOptions);
-	} else {
-		const newval: L402Cookie = { macaroon: mac, invoice: '', preimage, count: 1 };
-		cookies.set(slug, JSON.stringify(newval), CookieOptions);
 	}
 
 	const response: SsrApiResponse = {

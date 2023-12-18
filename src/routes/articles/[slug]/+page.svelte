@@ -15,6 +15,8 @@
 	import type { PaywallStatus, SsrApiResponse } from '$lib/type';
 	import { getPubkeyFromNSeckey, getUserRelayList, normalize, subscribeFeed } from '$lib/nostr';
 	import { ndk, servicer } from '$lib/stores/ndk';
+	import { excuteChallenge as executeChallenge } from '$lib/l402.js';
+	import { authInProcess } from '$lib/stores/l402.js';
 
 	export let data;
 
@@ -34,18 +36,18 @@
 		}
 		// put here to fix mobile browser
 		await ndk.connect();
-		// already purchased case
+		// already purchased
 		const purchaseHistory = nostrAccount.purchaseHistory.get();
 		const found = purchaseHistory.find((val) => val.slug === data.slug);
 		if (!!found && !!found.preimage && !!found.macaroon) {
 			await verify(found.preimage, found.macaroon);
 			return;
 		}
-		// challenge
+		// new challenge & still in challenge
 		await challenge();
 	});
 	onDestroy(() => {
-		if (!!subscription) {
+		if (subscription) {
 			subscription.stop();
 		}
 	});
@@ -60,52 +62,36 @@
 			isLoading = true;
 
 			const relayList = await getUserRelayList(nPubkey);
-			const res = await fetch('/api/challenge', {
-				method: 'POST',
-				body: JSON.stringify({
-					slug: data.slug,
-					nPubkey,
-					relayList,
-					price: data.post.paywall.price
-				}),
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-			const result: SsrApiResponse = await res.json();
+			const result = await executeChallenge(data.slug, data.post.paywall.price, nPubkey, relayList);
 			status = result.status;
-			if (result.invoice && result.invoice !== '') {
+			if (result.invoice) {
 				invoice = result.invoice;
 			}
-			if (result.html && result.html !== '') {
-				data.html = decodeURIComponent(result.html);
-			}
+
+			// Wait to be payed invoice
+			await subscribeNostr(result.macaroon);
 		} catch (error) {
 			console.error(error);
 		} finally {
 			// in case of nested blocks
 			isLoading = false;
 		}
-
-		await subscribeNostr();
 	}
 
-	async function verify(preimage: string, macaroon?: string) {
+	async function verify(preimage: string, macaroon: string) {
 		try {
 			isLoading = true;
 
 			const res = await fetch('/api/verify', {
 				method: 'POST',
-				body: JSON.stringify({ slug: data.slug, preimage, macaroon }),
+				body: JSON.stringify({ slug: data.slug }),
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					Authorization: `L402 ${macaroon}:${preimage}`
 				}
 			});
 			const result: SsrApiResponse = await res.json();
 			status = result.status;
-			if (result.invoice && result.invoice !== '') {
-				invoice = result.invoice;
-			}
 			if (result.html && result.html !== '') {
 				data.html = decodeURIComponent(result.html);
 			}
@@ -117,7 +103,7 @@
 		}
 	}
 
-	async function subscribeNostr() {
+	async function subscribeNostr(macaroon: string) {
 		subscription = await subscribeFeed(nPubkey);
 		subscription.on('event', async (event) => {
 			// recieved invoice settlement
@@ -126,7 +112,7 @@
 				const value = await normalize(event, servicer);
 				console.log("normalized nostr's DM ", value);
 				if (value.slug === data.slug) {
-					await verify(value.preimage);
+					await verify(value.preimage, macaroon);
 				}
 			} catch (error) {
 				console.error(error);
@@ -147,8 +133,9 @@
 
 		// WebLN
 		const preimage = await openPayment(invoice);
-		if (!!preimage) {
-			await verify(preimage);
+		if (preimage) {
+			const macaroon = authInProcess.getMacaroon(data.slug);
+			await verify(preimage, macaroon);
 		}
 	}
 
@@ -240,7 +227,7 @@
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	<div class="post-content">{@html data.html}</div>
 
-	{#if status !== 'VERIFIED_OR_NON_PAYWALLCONTENT'}
+	{#if data.post.paywall.hasPaywallContent && status !== 'VERIFIED_OR_NON_PAYWALLCONTENT'}
 		<div class="paywall">
 			<div class="paywall-title"><LockIcon size={'3rem'} /></div>
 			<div class="paywall-wordcount">{data.post.paywall.wordCount} characters</div>

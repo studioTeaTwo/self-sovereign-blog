@@ -12,7 +12,9 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'Post not found');
 	}
 
-	const html = postContents[slug].l402html;
+	const html = post.paywall.hasPaywallContent
+		? postContents[slug].l402html
+		: postContents[slug].html;
 
 	return {
 		slug,
