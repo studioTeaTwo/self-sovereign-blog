@@ -1,7 +1,7 @@
 ---
 title: Challenge time
 date: 2023-12-04
-price: 1000
+price: 10
 preview: We took off from simnet and are in a global network.
 ---
 
