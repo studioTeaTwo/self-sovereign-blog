@@ -59,7 +59,9 @@ export async function getUserRelayList(nPubkey: string) {
 	if (user.profile.relays && user.profile.relays.length > 0) {
 		// assume kind:0
 		// the reason of string[]: https://github.com/nostr-dev-kit/ndk/blob/07dfd1a8b61acbbb93998fd591fd751760f99494/ndk/src/user/index.ts#L129
-		return user.profile.relays as unknown as string[];
+		if (!(typeof user.profile.relays === 'string')) {
+			return user.profile.relays as unknown as string[];
+		}
 	}
 	if (user.profile.nip05) {
 		const nip05 = await NDKUser.fromNip05(user.profile.nip05);

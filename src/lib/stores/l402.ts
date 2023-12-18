@@ -28,7 +28,8 @@ export const authInProcess = {
 			return '';
 		}
 		const vals: AuthInProcess[] = JSON.parse(data);
-		return vals.find((val) => (val.slug = slug))?.macaroon;
+		const found = vals.find((val) => val.slug === slug);
+		return found ? found.macaroon : '';
 	},
 	set: (newval: AuthInProcess) => {
 		if (!browser) {
