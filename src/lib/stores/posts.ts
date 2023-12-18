@@ -3,6 +3,7 @@ import type { PostSummary } from '$lib/type';
 import { format } from 'date-fns';
 import { parse } from 'node-html-parser';
 import readingTime from 'reading-time/lib/reading-time';
+import type { SvelteComponent } from 'svelte';
 
 // we require some server-side APIs to parse all metadata
 if (browser) {
@@ -11,61 +12,66 @@ if (browser) {
 
 // Get all posts and add metadata
 export const postSummaries = Object.entries(import.meta.glob('/posts/**/*.md', { eager: true }))
-	.map(([filepath, post]) => {
-		const html = parse(post.default.render().html);
-		const preview = post.metadata.preview ? parse(post.metadata.preview) : html.querySelector('p');
+	.map(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		([filepath, post]: [string, { default: SvelteComponent; metadata: Record<string, any> }]) => {
+			const html = parse(post.default.render().html);
+			const preview = post.metadata.preview
+				? parse(post.metadata.preview)
+				: html.querySelector('p');
 
-		// Required
-		if (!post.metadata.title || post.metadata.title === '') {
-			throw new Error(`must set the title: ${filepath}`);
-		}
-		if (!post.metadata.date || post.metadata.date === '') {
-			throw new Error(`must set the date: ${filepath}`);
-		}
-
-		const htmlString = post.default.render().html;
-		const hasPaywallContent = hasL402Content(htmlString);
-		const wordCount = hasPaywallContent ? countWordOfPaywall(htmlString) : 0;
-		if (hasPaywallContent && (!post.metadata.price || post.metadata.price === '')) {
-			throw new Error(`must set the price: ${filepath}`);
-		}
-
-		return {
-			...post.metadata,
-
-			// generate the slug from the file path
-			slug: filepath
-				.replace(/(\/index)?\.md/, '')
-				.split('/')
-				.pop(),
-
-			// whether or not this file is `my-post.md` or `my-post/index.md`
-			// (needed to do correct dynamic import in posts/[slug].svelte)
-			isIndexFile: filepath.endsWith('/index.md'),
-
-			// format date as yyyy-MM-dd
-			date: format(
-				// offset by timezone so that the date is correct
-				addTimezoneOffset(new Date(post.metadata.date)),
-				'yyyy-MM-dd'
-			),
-
-			preview: {
-				html: preview.toString(),
-				// text-only preview (i.e no html elements), used for SEO
-				text: preview.structuredText ?? preview.toString()
-			},
-
-			// get estimated reading time for the post
-			readingTime: readingTime(html.structuredText).text,
-
-			paywall: {
-				hasPaywallContent,
-				price: post.metadata.price,
-				wordCount
+			// Required
+			if (!post.metadata.title || post.metadata.title === '') {
+				throw new Error(`must set the title: ${filepath}`);
 			}
-		} as PostSummary;
-	})
+			if (!post.metadata.date || post.metadata.date === '') {
+				throw new Error(`must set the date: ${filepath}`);
+			}
+
+			const htmlString = post.default.render().html;
+			const hasPaywallContent = hasL402Content(htmlString);
+			const wordCount = hasPaywallContent ? countWordOfPaywall(htmlString) : 0;
+			if (hasPaywallContent && (!post.metadata.price || post.metadata.price === '')) {
+				throw new Error(`must set the price: ${filepath}`);
+			}
+
+			return {
+				...post.metadata,
+
+				// generate the slug from the file path
+				slug: filepath
+					.replace(/(\/index)?\.md/, '')
+					.split('/')
+					.pop(),
+
+				// whether or not this file is `my-post.md` or `my-post/index.md`
+				// (needed to do correct dynamic import in posts/[slug].svelte)
+				isIndexFile: filepath.endsWith('/index.md'),
+
+				// format date as yyyy-MM-dd
+				date: format(
+					// offset by timezone so that the date is correct
+					addTimezoneOffset(new Date(post.metadata.date)),
+					'yyyy-MM-dd'
+				),
+
+				preview: {
+					html: preview.toString(),
+					// text-only preview (i.e no html elements), used for SEO
+					text: preview.structuredText ?? preview.toString()
+				},
+
+				// get estimated reading time for the post
+				readingTime: readingTime(html.structuredText).text,
+
+				paywall: {
+					hasPaywallContent,
+					price: post.metadata.price,
+					wordCount
+				}
+			} as PostSummary;
+		}
+	)
 	// sort by date
 	.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 	// add references to the next/previous post

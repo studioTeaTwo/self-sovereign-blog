@@ -47,7 +47,7 @@
 		await challenge();
 	});
 	onDestroy(() => {
-		if (!!subscription) {
+		if (subscription) {
 			subscription.stop();
 		}
 	});
@@ -92,9 +92,6 @@
 			});
 			const result: SsrApiResponse = await res.json();
 			status = result.status;
-			if (result.invoice && result.invoice !== '') {
-				invoice = result.invoice;
-			}
 			if (result.html && result.html !== '') {
 				data.html = decodeURIComponent(result.html);
 			}
@@ -136,7 +133,7 @@
 
 		// WebLN
 		const preimage = await openPayment(invoice);
-		if (!!preimage) {
+		if (preimage) {
 			const macaroon = authInProcess.getMacaroon(data.slug);
 			await verify(preimage, macaroon);
 		}
