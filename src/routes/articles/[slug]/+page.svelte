@@ -36,14 +36,14 @@
 		}
 		// put here to fix mobile browser
 		await ndk.connect();
-		// already purchased case
+		// already purchased
 		const purchaseHistory = nostrAccount.purchaseHistory.get();
 		const found = purchaseHistory.find((val) => val.slug === data.slug);
 		if (!!found && !!found.preimage && !!found.macaroon) {
 			await verify(found.preimage, found.macaroon);
 			return;
 		}
-		// challenge
+		// new challenge & still in challenge
 		await challenge();
 	});
 	onDestroy(() => {

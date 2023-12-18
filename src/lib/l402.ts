@@ -18,7 +18,7 @@ export async function excuteChallenge(
 	const data = purchaseHistory.find((data) => data.slug === slug);
 
 	// have data in process
-	if (data) {
+	if (data && !isExpiredInvoice(data.invoice)) {
 		console.log('still in challenge ');
 		return { status: 'NEED_PAYMENT', invoice: data.invoice, macaroon: data.macaroon };
 	}
@@ -94,22 +94,17 @@ export function isValidL402token(headers: Request['headers']) {
 	return true;
 }
 
-// Parse Authentication
-export function isWaitingToPayInvoice(record) {
-	if (record == null) {
-		return false;
-	}
-	const r = JSON.parse(record);
-	if (!r.macaroon || !r.invoice) {
-		return false;
+export function isExpiredInvoice(invoice: string) {
+	if (invoice == null) {
+		return true;
 	}
 
-	const invoice = decode(r.invoice);
-	if (invoice.timeExpireDate * 1000 < Date.now()) {
-		return false;
+	const decoded = decode(invoice);
+	if (decoded.timeExpireDate * 1000 < Date.now()) {
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 export function getStatus(
