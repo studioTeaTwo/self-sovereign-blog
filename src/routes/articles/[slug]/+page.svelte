@@ -69,7 +69,7 @@
 			}
 
 			// Wait to be payed invoice
-			await subscribeNostr(result.macaroon);
+			await subscribeNostr();
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -103,7 +103,7 @@
 		}
 	}
 
-	async function subscribeNostr(macaroon: string) {
+	async function subscribeNostr() {
 		subscription = await subscribeFeed(nPubkey);
 		subscription.on('event', async (event) => {
 			// recieved invoice settlement
@@ -112,7 +112,7 @@
 				const value = await normalize(event, servicer);
 				console.log("normalized nostr's DM ", value);
 				if (value.slug === data.slug) {
-					await verify(value.preimage, macaroon);
+					await verify(value.preimage, value.macaroon);
 				}
 			} catch (error) {
 				console.error(error);
