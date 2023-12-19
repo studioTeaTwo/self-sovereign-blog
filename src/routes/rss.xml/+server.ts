@@ -32,7 +32,7 @@ export async function GET({ setHeaders }) {
               <item>
                 <guid>${postsUrl}/${post.slug}</guid>
                 <title>${post.title}</title>
-                <description>${post.preview.text}</description>
+                <description>${escapeHtml(post.preview.text)}</description>
                 <link>${postsUrl}/${post.slug}</link>
                 <pubDate>${new Date(post.date).toUTCString()}</pubDate>
             </item>
@@ -43,4 +43,20 @@ export async function GET({ setHeaders }) {
     </rss>`;
 
 	return new Response(xml);
+}
+
+function escapeHtml(target) {
+	if (typeof target !== 'string') {
+		return target;
+	}
+	return target.replace(/[&'`"<>]/g, (match) => {
+		return {
+			'&': '&amp;',
+			"'": '&#x27;',
+			'`': '&#x60;',
+			'"': '&quot;',
+			'<': '&lt;',
+			'>': '&gt;'
+		}[match];
+	});
 }
