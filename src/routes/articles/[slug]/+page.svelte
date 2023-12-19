@@ -238,16 +238,23 @@
 				</div>
 			{:else if status === 'NEED_NOSTR'}
 				<div>
-					<input type="text" name="nostrSeckey" placeholder="nsec123..." />
-					<button type="button" on:click={handleClickNostrSeckey}>input</button>
-					<button type="button" on:click={handleClickNip07}>NIP-07</button>
-					<div class="paywall-nostr-description">
-						<p class="paywall-nostr-description-text">
-							We use LightningNetwork to purchase the paywalled content. First, log in to Nostr,
-							then pay your LightningNetwork invoice. Nostr is used to synchronize the payment
-							proof, which is a preimage of the invoice, via a direct message by NIP-04 after
-							payment. Your Nostr secret key is only stored locally and doesn't share with server.
-							With NIP-07, you don't even need a private key.
+					<div class="paywall-nostr-input">
+						<input type="text" name="nostrSeckey" placeholder="nsec123..." />
+						<button type="button" on:click={handleClickNostrSeckey}>input</button>
+						<button class="paywall-nostr-nip07" type="button" on:click={handleClickNip07}
+							>NIP-07</button
+						>
+					</div>
+					<div class="paywall-description">
+						<p class="paywall-description-text">
+							This is a proof-of-concept experimental feature. We use LightningNetwork and Nostr to
+							unlock the paywalled content.
+						</p>
+						<p class="paywall-description-text">
+							First, log in to Nostr, then pay your LightningNetwork invoice. Nostr is used to
+							synchronize the payment proof, which is a preimage of the invoice, via a direct
+							message by NIP-04 after payment. Your Nostr secret key is only stored locally and
+							doesn't share with server. With NIP-07, you don't even need Nostr secret key.
 						</p>
 					</div>
 				</div>
@@ -270,6 +277,12 @@
 						<button type="button" class="paywall-wallet" on:click={handleClickWallet}>
 							Open Wallet
 						</button>
+					</div>
+					<div class="paywall-description">
+						<p class="paywall-description-text">
+							This is a proof-of-concept experimental feature. The full article can be found at
+							GitHub link in the bottom bar. Please think of it just as a kind of donation.
+						</p>
 					</div>
 				{/if}
 
@@ -378,11 +391,18 @@
 			font-size: 0.8rem;
 		}
 	}
-	.paywall-nostr-description {
+	.paywall-nostr-input {
+		display: flex;
+		justify-content: center;
+	}
+	.paywall-nostr-nip07 {
+		margin-left: 1rem;
+	}
+	.paywall-description {
 		max-width: 300px;
 		margin: 0 auto;
 	}
-	.paywall-nostr-description-text {
+	.paywall-description-text {
 		color: snow;
 		text-align: left;
 		@media screen and (min-width: 1024px) {
