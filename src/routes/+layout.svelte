@@ -1,5 +1,10 @@
 <script>
-	import { Title, RepositoryUrl, BitcoinDonationAddress } from '$lib/constants';
+	import {
+		Title,
+		RepositoryUrl,
+		BitcoinDonationAddress,
+		LightningDonationAddress
+	} from '$lib/constants';
 	import { base } from '$app/paths';
 	import GithubLogo from '$lib/assets/GitHub-Mark-32px.png';
 	import BitcoinDonation from '$lib/assets/Bitcoin_Donation.png';
@@ -55,6 +60,7 @@
 		<p>Thank you for your love!</p>
 		<div class="donation-address-qr"><img alt="Donation" src={BitcoinDonation} /></div>
 		<div class="donation-address-text"><span>{BitcoinDonationAddress}</span></div>
+		<div class="donation-address-text"><span>{LightningDonationAddress}</span></div>
 	</div>
 </dialog>
 
@@ -108,5 +114,6 @@
 	.macguffin {
 		font-size: 0.8rem;
 		font-weight: bold;
+		margin-bottom: 1rem;
 	}
 </style>

@@ -6,6 +6,7 @@ import type { CookieSerializeOptions } from 'cookie';
 export const Title = 'Self-Sovereign Blog';
 export const Author = 'TeaTwo';
 export const BitcoinDonationAddress = 'bc1q8pmsy0xfrkpr3vky9kw5kjmqrm0fsg70q963dg';
+export const LightningDonationAddress = 'teatwo@getalby.com';
 
 // L402
 export const SiteUrl = dev ? 'http://localhost:5137' : PUBLIC_BLOG_SERVER;

@@ -19,7 +19,8 @@ export type PaywallStatus =
 	| 'NEED_INVOICE'
 	| 'NEED_PAYMENT'
 	| 'NEED_VERIFIED'
-	| 'VERIFIED_OR_NON_PAYWALLCONTENT';
+	| 'VERIFIED_OR_NON_PAYWALLCONTENT'
+	| 'WAIT_LOADING';
 
 export type PurchaseHistory = {
 	eventId: string; // Nostr event id

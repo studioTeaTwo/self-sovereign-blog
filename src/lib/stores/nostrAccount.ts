@@ -1,4 +1,4 @@
-// This works only in BROWSER side
+// This works only in BROWSER side, using LocalStorage.
 
 import { browser } from '$app/environment';
 import type { PurchaseHistory } from '$lib/type';

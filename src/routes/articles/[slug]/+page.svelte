@@ -27,7 +27,7 @@
 	let isLoading = false;
 	let nPubkey = nostrAccount.npubkey.get();
 	let invoice = '';
-	let status: PaywallStatus = nPubkey === '' ? 'NEED_NOSTR' : 'NEED_INVOICE';
+	let status: PaywallStatus = nPubkey === '' ? 'NEED_NOSTR' : 'WAIT_LOADING';
 	let subscription: NDKSubscription;
 
 	onMount(async () => {
@@ -35,7 +35,7 @@
 			return;
 		}
 		// put here to fix mobile browser
-		await ndk.connect();
+		await ndk.connect(2000);
 		// already purchased
 		const purchaseHistory = nostrAccount.purchaseHistory.get();
 		const found = purchaseHistory.find((val) => val.slug === data.slug);
@@ -282,6 +282,8 @@
 						</form>
 					</div>
 				{/if}
+			{:else if status === 'WAIT_LOADING'}
+				<!-- put nothing -->
 			{:else if status === 'NEED_INVOICE'}
 				<p>Failed to issue a invoice. Please try again after.</p>
 			{:else if status === 'NEED_VERIFIED'}
