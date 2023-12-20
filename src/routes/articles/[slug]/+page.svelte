@@ -239,7 +239,7 @@
 			{:else if status === 'NEED_NOSTR'}
 				<div>
 					<div class="paywall-nostr-input">
-						<input type="text" name="nostrSeckey" placeholder="nsec123..." />
+						<input class="paywall-nostr-nsec" type="text" name="nostrSeckey" placeholder="nsec123..." />
 						<button type="button" on:click={handleClickNostrSeckey}>input</button>
 						<button class="paywall-nostr-nip07" type="button" on:click={handleClickNip07}
 							>NIP-07</button
@@ -393,7 +393,11 @@
 	}
 	.paywall-nostr-input {
 		display: flex;
-		justify-content: center;
+		width: 300px;
+		margin: 0 auto;
+	}
+	.paywall-nostr-nsec {
+		height: 1.5rem;
 	}
 	.paywall-nostr-nip07 {
 		margin-left: 1rem;
