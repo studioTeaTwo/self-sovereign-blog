@@ -8,7 +8,7 @@ Blog is handcrafted by JS framework, SvelteKit, and can be hosted anywhere. Paym
 
 Both Bitcoin and Nostr are the people's network without specific authorities. So, this paywall is "Self-Sovereignty", with no middlemen involved.
 
-![demo](/posts/004_paywall-without-intermediaries/after_low.mp4)
+https://github.com/studioTeaTwo/self-sovereign-blog/assets/1317305/ea5cdf72-0c93-4a93-aeae-d667a879c9b0
 
 ## Overview
 
