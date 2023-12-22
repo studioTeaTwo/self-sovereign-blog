@@ -1,7 +1,7 @@
 ---
 title: Paywall Without Intermediaries
 date: 2023-12-22
-preview: Now that we've transitted to mainnet, I'll describe an overview and technical details. This blog, "Self-Sovereign Blog", is a showcase for "Paywall without intermediaries". It will also be a showcase for Bitcoin as a “medium of exchange”. "Paywall without intermediaries" means a paywall which does not require a blog platformer nor payment provider. It can give the people the weapon of choice. The benefits for users include the following.
+preview: Knowledge is freedom and ignorance is slavery. Now that transitted to mainnet, I'll describe an overview and technical details. This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediaries". It will also be a showcase for Bitcoin as a medium of exchange. "Paywall Without Intermediaries" means a paywall which does not require a blog platformer nor payment provider. It can give people the weapon of choice. The benefits for users include the following. - No content moderation - No review and approval/rejection - No commission - No expiry of degital points - No setting of bank account
 ---
 
 Knowledge is freedom and ignorance is slavery. Now that transitted to mainnet, I'll describe an overview and technical details.
@@ -18,7 +18,7 @@ This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediar
 - No expiry of degital points
 - No setting of bank account
 
-There are three keys to realizing above: Self-hosting, Bitcoin, and Nostr.
+There are three keys to realizing above: Self-made, Bitcoin, and Nostr.
 
 Blog is handcrafted by JS framework, SvelteKit, and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and enables fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
 
@@ -40,7 +40,7 @@ After two steps have done and whole article has shown, the end of video shows di
 
 ## Means of realization
 
-In the previous section, I mentioned three keys: self-hosting, Bitcoin, and Nostr, but this article will not cover them in detail. Please see existing explanations. Instead, let's dive a little deeper here and explain the distinctive technical elements.
+In the previous section, I mentioned three keys: Self-made, Bitcoin, and Nostr, but this article will not cover them in detail. Please see existing explanations. Instead, let's dive a little deeper here and explain the distinctive technical elements.
 
 ### 1. L402 protocol
 
@@ -109,11 +109,15 @@ The third is to put the articles on the platform for content discovery. As you k
 
 ## Considerations
 
-### Can't it be completed with just lightning?
+### Can't it be completed with just Lightning?
 
-I think it would be difficult to do it with just the Lightning Protocol. You'll probably need to limit sort of wallet, or at most wrap invoices with an extension like LNURL. All we need to do is to be able to return the preimage directly to the app when paying from any wallet.
+For this use case, I think it would be difficult for L402 to do it with just the Lightning protocol. You'll probably need to limit sort of wallet, or at most wrap invoices with an extension like LNURL. All we need to do is to be able to return the preimage directly to the app when paying from any wallet.
 
-### A case that preimage can not gurantee proof of payment
+### Comparison with other paywalls using Lightning
+
+There are several paywalls using Lightning. I don't know everything, but compared to the existing, privacy is honestly lower because the seller knows the buyer's Nostr account. But since the purchase proof is stored on Nostr (not cookies or blog host DB), I think that it has improved the decentralization of data persistence and the convenience being able to port across devices.
+
+### A case that preimage cannot guarantee proof of payment
 
 There is one problem for NIP-04, which though the message content is encrypted, others can see who is direct messaging with whom. Preimage is obtained not only payer, but also intermediate nodes for payment routing. Therefore, when combined with NIP-04's messaging data, parties other than the payer may also get authorization for paywalled content. To avoid this, it is necessary to prevent routing nodes from acquiring preimages, or to completely hide preimage passing message from others. Therefore, this paywall currently has a vulnerability and will be treated as a proof-of-concept experiment.
 
@@ -123,8 +127,7 @@ The current L402 protocol appears to be designed just for BOLT11/HTLC. What happ
 
 ### Any others
 
-If you notice anything or have any concerns, please feel free to let me know.
-https://github.com/studioTeaTwo/self-sovereign-blog/issues
+If you notice anything or have any concerns, please feel free to let me know: https://github.com/studioTeaTwo/self-sovereign-blog/issues
 
 ## The path to self-sovereign identity
 
@@ -134,4 +137,4 @@ https://github.com/studioTeaTwo/self-sovereign-blog/issues
 
 teatwo@getalby.com
 
-Paths are made by walking. - Franz Kafka
+Paths are made by walking - Franz Kafka

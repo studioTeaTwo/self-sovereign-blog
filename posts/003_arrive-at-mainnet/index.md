@@ -10,7 +10,7 @@ It's done, we've reached the destination.
 There is BREAKING CHANGE.
 
 - It has more met the flow of l402's specifications
-- Cookies (but only for first-party use) have been removed and data is now only stored in LocalStorage
+- Cookies (but only for first-party use) have been removed and data have now moved to LocalStorage
 
 If you have accessed at least once on testnet, please clear your cookies & localStorage.
 

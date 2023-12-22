@@ -2,17 +2,17 @@
 
 This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediaries". It will also be a showcase for Bitcoin as a medium of exchange.
 
-There are three keys to realizing above: Self-hosting, Bitcoin, and Nostr.
+There are three keys to realizing above: Self-made, Bitcoin, and Nostr.
 
 Blog is handcrafted by JS framework, SvelteKit, and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and enables fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
 
 Both Bitcoin and Nostr are the people's network without specific authorities. So, this paywall is "Self-Sovereignty", with no middlemen involved.
 
-The demo is [here](posts/002_ligtning-nostr/after.webm).
+![demo](/posts/004_paywall-without-intermediaries/after_low.mp4)
 
 ## Overview
 
-![](doc/overview.png)
+![overview](doc/overview.png)
 
 The front server is responsible for:
 
@@ -32,7 +32,7 @@ Nostr protocol is a decentralized network similar to Bitcoin, which is used on t
 
 ## L402 protocol flow
 
-![](doc/challenge-response.sequence.png)
+![challenge-response.sequence](doc/challenge-response.sequence.png)
 
 Details are explained in [this post](https://self-sovereign.blog.teatwo.dev/articles/004_paywall-without-intermediaries).
 
