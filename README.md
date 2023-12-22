@@ -1,10 +1,12 @@
 # Self-Sovereign Blog
 
-The self-sovereign blog is a showcase of "paywall without intermediaries".
+This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediaries". It will also be a showcase for Bitcoin as a medium of exchange.
 
-This blog is handcrafted by SvelteKit and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and realizes fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
+There are three keys to realizing above: Self-hosting, Bitcoin, and Nostr.
 
-Both Bitcoin and Nostr are the people's networks without specific authorities. So, this paywall is "Self-Sovereignty", with no middlemen involved.
+Blog is handcrafted by JS framework, SvelteKit, and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and enables fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
+
+Both Bitcoin and Nostr are the people's network without specific authorities. So, this paywall is "Self-Sovereignty", with no middlemen involved.
 
 The demo is [here](posts/002_ligtning-nostr/after.webm).
 
@@ -32,4 +34,17 @@ Nostr protocol is a decentralized network similar to Bitcoin, which is used on t
 
 ![](doc/challenge-response.sequence.png)
 
-TODO
+Details are explained in [this post](https://self-sovereign.blog.teatwo.dev/articles/004_paywall-without-intermediaries).
+
+## References
+
+I appreciate for the codebases in addition to those listed in package managers that are very helpful in this development.
+
+- Handcrafted blog by svelte
+  https://github.com/mattjennings/sveltekit-blog-template
+- Nostr client by svelte
+  https://github.com/SnowCait/nostter
+- Nostr client by svelte
+  https://github.com/akiomik/nosvelte
+- Apertue demo
+  https://github.com/ellemouton/aperture-demo
