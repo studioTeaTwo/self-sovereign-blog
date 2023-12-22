@@ -41,11 +41,10 @@ Details are explained in [this post](https://self-sovereign.blog.teatwo.dev/arti
 I appreciate for the codebases in addition to those listed in package managers that are very helpful in this development.
 
 - Handcrafted blog by svelte
-https://github.com/mattjennings/sveltekit-blog-template
+  https://github.com/mattjennings/sveltekit-blog-template
 - Nostr client by svelte
-https://github.com/SnowCait/nostter
+  https://github.com/SnowCait/nostter
 - Nostr client by svelte
-https://github.com/akiomik/nosvelte
+  https://github.com/akiomik/nosvelte
 - Apertue demo
-https://github.com/ellemouton/aperture-demo
-
+  https://github.com/ellemouton/aperture-demo
