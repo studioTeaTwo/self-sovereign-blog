@@ -5,7 +5,7 @@ import { authInProcess } from './stores/l402';
 
 type fetch = typeof fetch;
 
-// This is called on mounting component or on inputten Nostr seckey or NIP-07.
+// This is called on mounting component or on input Nostr seckey or NIP-07.
 // Authenticate & Authroize L402.
 // HttpStatus 500 keeps current PaywallStatus because request self failed.
 export async function excuteChallenge(
