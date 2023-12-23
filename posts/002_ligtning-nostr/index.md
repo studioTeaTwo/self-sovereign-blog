@@ -10,7 +10,7 @@ preview: It's time to evolve from apes. Last time this blog was able to implemen
 Last time this blog was able to implement [L402](https://github.com/lightning/blips/pull/26). But it was **incomplete**.
 Entering the preimage manually is a problem. Nostr will be a solution.
 
-(Sorry that this movie is large. If you cannot view it, please access again from a rich environment such as PC or Wi-Fi.)
+addition: Sorry that these videos are large. If you cannot view it, please access again from a rich environment such as PC or Wi-Fi.
 
 ## BEFORE:
 

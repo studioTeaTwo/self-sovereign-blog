@@ -1,10 +1,12 @@
 ---
 title: Paywall Without Intermediaries
 date: 2023-12-22
-preview: Knowledge is freedom and ignorance is slavery. Now that transitted to mainnet, I'll describe an overview and technical details. This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediaries". It will also be a showcase for Bitcoin as a medium of exchange. "Paywall Without Intermediaries" means a paywall which does not require a blog platformer nor payment provider. It can give people the weapon of choice. The benefits for users include the following. - No content moderation - No review and approval/rejection - No commission - No expiry of degital points - No setting of bank account
+preview: Knowledge is freedom and ignorance is slavery. - Miles Davis Now that transitted to mainnet, I'll describe an overview and technical details. This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediaries". It will also be a showcase for Bitcoin as a medium of exchange. "Paywall Without Intermediaries" means a paywall which does not require a blog platformer nor payment provider. It can give people the weapon of choice. The benefits for users include the following. - No content moderation - No review and approval/rejection - No commission - No expiry of degital points - No setting of bank account
 ---
 
-Knowledge is freedom and ignorance is slavery. Now that transitted to mainnet, I'll describe an overview and technical details.
+Knowledge is freedom and ignorance is slavery. - Miles Davis
+
+Now that transitted to mainnet, I'll describe an overview and technical details.
 
 ## What is
 
@@ -20,7 +22,7 @@ This blog, "Self-Sovereign Blog", is a showcase for "Paywall Without Intermediar
 
 There are three keys to realizing above: Self-made, Bitcoin, and Nostr.
 
-Blog is handcrafted by JS framework, SvelteKit, and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and enables fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
+Blog is handcrafted by JavaScript framework, SvelteKit, and can be hosted anywhere. Payments for paywall use Bitcoin which is the border-less internet native money, specifically Lightning Network which is the layer2 of Bitcoin and enables fast finality and micro payments. The proof of payment is shared between buyers and sellers through messaging using the Nostr protocol.
 
 Both Bitcoin and Nostr are the people's network without specific authorities. So, this paywall is "Self-Sovereignty", with no middlemen involved.
 
@@ -54,9 +56,9 @@ You are getting 402 error code when displaying a paywalled content. To be more p
 
 Can you confirm that the invoice has arrived at the bottom right?
 
-### 2. NIP-04
+### 2. NIP-04 - Encrypted Direct Message
 
-L402 requires buyer to provide proof of payment. That's where Nostr's Direct Messaging feature, [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md), comes in. But I need to explain proof of payment before NIP-04 concisely.
+L402 requires buyer to provide proof of payment. That's where Nostr's Direct Messaging feature, [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md), comes in. But I need to explain "proof of payment" before NIP-04 concisely.
 
 The Lightning Network is a trustless system with no escrow. Or perhaps it would be better to say that escrow has been replaced by smart contracts through cryptography. Proof of payment refers to the preimage (also called payment secret), which is created by payee and exposed to payer in the last phaze of payment flow. Preimage which only payee knows is the original value of payment hash. So payer can calculate payment hash from preimage and confirm that payee is correct remittance destination by matching with payment hash inclueded the invoice.
 
@@ -72,7 +74,7 @@ Let me explain how the above is structured. The Whole overview is below.
 
 This blog itself consists of a browser, a front server, and an API server at the middle of the diagram, and payments flow through two networks at the top and bottom of the diagram.
 
-Also, it shows the sequence of payment authentication/authorization for paywall. Replace L402 server with front server and API server, and replace LND with Lightning Network.
+Also, it shows the sequence of payment authentication/authorization for paywall. Please read to replace `L402 server` with front server and API server, and replace `LND` with Lightning Network.
 
 ![challenge-response.sequence](./challenge-response.sequence.webp)
 
@@ -93,7 +95,7 @@ I'll also explain why I chose Nostr, as I'm sure you'll be some interested in th
 
 ### 1. Sharing proof of payment
 
-The main reason that adds Nostr is, again, to share proof of payment. I know, if Lightning payments all over the world are only WebLN that returns the preimage directly after the payment is completed, Nostr doesn't need. But that isn't so. This blog cannot receive payment callbacks from mobile wallets, node wallets, etc. Nostr has made it universal.
+The main reason that adds Nostr is, again, to share proof of payment. I know, if Lightning payments all over the world are only WebLN that returns the preimage directly after the payment is completed, then Nostr doesn't need. But that isn't so. This blog cannot receive payment callbacks from mobile wallets, node wallets, etc. Nostr has made it universal.
 
 However, Nostr may be too big a feature for that purpose alone. Most of the problems I receive from user testing are related to Nostr, as the Lightning area is robust thanks to Apreture. For example, mobile browser is slow or unresponsive (the cause is around websokect), DMs do not arrive (they are issued to the network, but the Nostr client does not catch them), etc. Complexity skyrocketed, especially in the client codebase.
 
@@ -113,13 +115,17 @@ The third is to put the articles on the platform for content discovery. As you k
 
 For this use case, I think it would be difficult for L402 to do it with just the Lightning protocol. You'll probably need to limit sort of wallet, or at most wrap invoices with an extension like LNURL. All we need to do is to be able to return the preimage directly to the app when paying from any wallet.
 
+### Nostr secret key requirement increases risk
+
+That's right. NIP-07 prevents secret key from exposing to this blog, but its operating environment is the same as WebLN, that is, only the web. Although progress has been made in the development of web extensions in mobile browsers, we still now need other solutions.
+
 ### Comparison with other paywalls using Lightning
 
 There are several paywalls using Lightning. I don't know everything, but compared to the existing, privacy is honestly lower because the seller knows the buyer's Nostr account. But since the purchase proof is stored on Nostr (not cookies or blog host DB), I think that it has improved the decentralization of data persistence and the convenience being able to port across devices.
 
 ### A case that preimage cannot guarantee proof of payment
 
-There is one problem for NIP-04, which though the message content is encrypted, others can see who is direct messaging with whom. Preimage is obtained not only payer, but also intermediate nodes for payment routing. Therefore, when combined with NIP-04's messaging data, parties other than the payer may also get authorization for paywalled content. To avoid this, it is necessary to prevent routing nodes from acquiring preimages, or to completely hide preimage passing message from others. Therefore, this paywall currently has a vulnerability and will be treated as a proof-of-concept experiment.
+There is one problem for NIP-04, which though the message content is encrypted, others can see "who" is direct messaging with "whom". Preimage is obtained not only payer, but also intermediate nodes for payment routing. Therefore, when combined with NIP-04's messaging data, parties other than the payer may also get authorization for paywalled content. To avoid this, it is necessary to prevent routing nodes from acquiring preimages, or to completely hide the message passing a preimage from others. Therefore, this paywall currently has a vulnerability and will be treated as a proof-of-concept experiment.
 
 ### PLTC/BOLT12
 
