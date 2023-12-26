@@ -127,6 +127,8 @@ There are several paywalls using Lightning. I don't know everything, but compare
 
 There is one problem for NIP-04, which though the message content is encrypted, others can see "who" is direct messaging with "whom". Preimage is obtained not only payer, but also intermediate nodes for payment routing. Therefore, when combined with NIP-04's messaging data, parties other than the payer may also get authorization for paywalled content. To avoid this, it is necessary to prevent routing nodes from acquiring preimages, or to completely hide the message passing a preimage from others. Therefore, this paywall currently has a vulnerability and will be treated as a proof-of-concept experiment.
 
+UPDATE: To acutually get authorization, you need not only preimage but also macaroon. The routing nodes cannot get the macaroon.
+
 ### PLTC/BOLT12
 
 The current L402 protocol appears to be designed just for BOLT11/HTLC. What happens if Lightning Network updates to PLTC? I don't think this is a problem at all. Rather, the above problem is resolved as the routing node will no longer be able to obtain the preimage. BOLT12 may be a little difficult as it is no longer just a one-shot invoice exchange. At least the sequence will be more complex. I am looking forward to seeing more flexibility in pricing, such as allowing payers to set prices and structuring subscriptions rather than paying per article.

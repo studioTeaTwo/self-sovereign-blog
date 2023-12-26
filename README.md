@@ -38,7 +38,7 @@ Details are explained in [this post](https://self-sovereign.blog.teatwo.dev/arti
 
 ## References
 
-I appreciate for the codebases in addition to those listed in package managers that are very helpful in this development.
+I appreciate for the following codebases in addition to those listed in package managers that are very helpful in this development.
 
 - Handcrafted blog by svelte
   https://github.com/mattjennings/sveltekit-blog-template
